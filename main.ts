@@ -1083,10 +1083,31 @@ class R2UploaderSettingTab extends PluginSettingTab {
 			new Setting(wmEl)
 				.setName("Logo Path (vault-relative)")
 				.setDesc('e.g. "_assets/logo-wm.png"')
-				.addText((text) =>
+				.addText((text) => {
 					text.setPlaceholder("_assets/logo-wm.png")
 						.setValue(this.plugin.settings.watermarkLogoPath)
-						.onChange(async (v) => { this.plugin.settings.watermarkLogoPath = v.trim(); await this.save(); })),
+						.onChange(async (v) => {
+							const trimmed = v.trim();
+							this.plugin.settings.watermarkLogoPath = trimmed;
+							await this.save();
+							const setting = text.inputEl.closest(".setting-item");
+							const descEl = setting?.querySelector(".setting-item-description");
+							if (!descEl) return;
+							if (!trimmed) {
+								descEl.textContent = 'e.g. "_assets/logo-wm.png"';
+								descEl.removeAttribute("style");
+								return;
+							}
+							const exists = await this.plugin.app.vault.adapter.exists(trimmed);
+							if (exists) {
+								descEl.textContent = "✓ File found";
+								(descEl as HTMLElement).style.color = "var(--color-green)";
+							} else {
+								descEl.textContent = "⚠ File not found in vault";
+								(descEl as HTMLElement).style.color = "var(--color-red)";
+							}
+						});
+				}),
 
 			new Setting(wmEl)
 				.setName("Logo Size (% of image width)")
