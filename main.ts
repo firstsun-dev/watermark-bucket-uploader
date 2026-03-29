@@ -619,6 +619,7 @@ export default class R2UploaderPlugin extends Plugin {
 		}));
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	onunload() {}
 
 	async loadSettings() {
@@ -956,6 +957,7 @@ class R2UploaderSettingTab extends PluginSettingTab {
 		this.previewCanvas.style.height = "225px";
 
 		// Preview background control
+		// eslint-disable-next-line prefer-const
 		let customColorSetting: Setting;
 		const bgSetting = new Setting(previewWrap)
 			.setName("Preview background")

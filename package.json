@@ -8,7 +8,8 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"deploy": "node esbuild.config.mjs production && cp main.js manifest.json styles.css ../../src/content/.obsidian/plugins/watermark-s3-uploader/",
-		"prepare": "husky"
+		"prepare": "husky",
+		"lint": "eslint --ext .ts main.ts"
 	},
 	"keywords": [],
 	"author": "ClaudiaFang",
