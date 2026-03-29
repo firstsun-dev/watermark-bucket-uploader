@@ -1,29 +1,42 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "watermark-s3-uploader",
+	"version": "1.1.0",
+	"description": "Obsidian plugin: upload images to Cloudflare R2 with WebP conversion and watermark support.",
 	"main": "main.js",
-	"type": "module",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"lint": "eslint ."
+		"deploy": "node esbuild.config.mjs production && cp main.js manifest.json styles.css ../../src/content/.obsidian/plugins/watermark-s3-uploader/",
+		"prepare": "husky"
 	},
 	"keywords": [],
-	"license": "0-BSD",
+	"author": "ClaudiaFang",
+	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^16.11.6",
-		"esbuild": "0.25.5",
-		"eslint-plugin-obsidianmd": "0.1.9",
-		"globals": "14.0.0",
+		"@types/mime-types": "^2.1.1",
+		"@types/node": "^18.11.18",
+		"@typescript-eslint/eslint-plugin": "5.29.0",
+		"@typescript-eslint/parser": "5.29.0",
+		"browser-resolve": "^2.0.0",
+		"builtin-modules": "3.3.0",
+		"detective": "^5.2.1",
+		"esbuild": "0.14.47",
+		"husky": "^9.1.7",
+		"obsidian": "latest",
+		"process": "^0.11.10",
 		"tslib": "2.4.0",
-		"typescript": "^5.8.3",
-		"typescript-eslint": "8.35.1",
-		"@eslint/js": "9.30.1",
-		"jiti": "2.6.1"
+		"typescript": "4.7.4"
 	},
 	"dependencies": {
-		"obsidian": "latest"
+		"@aws-sdk/client-s3": "3.317.0",
+		"@aws-sdk/fetch-http-handler": "^3.310.0",
+		"@aws-sdk/protocol-http": "^3.310.0",
+		"@aws-sdk/querystring-builder": "^3.310.0",
+		"@aws-sdk/types": "^3.310.0",
+		"@smithy/fetch-http-handler": "^2.2.7",
+		"browser-image-compression": "^2.0.2",
+		"filesize": "^10.1.6",
+		"minimatch": "^10.0.3"
 	}
 }

@@ -1,8 +1,95 @@
-/*
+/* Watermark S3 Uploader — Settings UI styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.r2-settings details {
+    margin-bottom: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
 
-If your plugin does not need CSS, delete this file.
+.r2-section-summary {
+    padding: 8px 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--background-secondary);
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
 
-*/
+.r2-section-summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Chevron arrow — rendered as a pseudo-element after the icon */
+.r2-section-summary::before {
+    content: "";
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 4px 0 4px 6px;
+    border-color: transparent transparent transparent currentColor;
+    opacity: 0.5;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+details[open] > .r2-section-summary::before {
+    transform: rotate(90deg);
+}
+
+.r2-section-icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-accent);
+    flex-shrink: 0;
+}
+
+.r2-section-icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+.r2-section-body {
+    padding: 8px 0;
+}
+
+/* Sub-section headers inside open sections */
+.r2-subsection-heading {
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    padding: 10px 16px 4px;
+    margin: 0;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.r2-subsection-heading:first-child {
+    border-top: none;
+}
+
+/* Watermark preview */
+.r2-preview-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 16px;
+}
+
+.r2-preview-canvas {
+    width: 400px;
+    height: 225px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    display: block;
+}
+
+.r2-preview-label {
+    font-size: 0.75em;
+    color: var(--text-muted);
+}

@@ -1,90 +1,71 @@
-# Obsidian Sample Plugin
+# Watermark S3 Uploader
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+An Obsidian plugin that intercepts image paste/drop events, optionally converts to WebP, applies a canvas-based watermark, uploads to Cloudflare R2 (or any S3-compatible storage), and inserts the resulting URL as a markdown image link.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Auto-upload on paste/drag** — images are uploaded immediately without manual steps
+- **WebP conversion** — convert images to WebP before upload for smaller file sizes
+- **Image compression** — reduce file size with configurable quality and dimension limits
+- **Text watermark** — overlay custom text with configurable font, size, color, bold/italic, position, and offset
+- **Logo watermark** — overlay a local image as a watermark with configurable size, opacity, position, and offset
+- **Live watermark preview** — see exactly how the watermark will look before uploading
+- **Custom endpoint** — works with Cloudflare R2, AWS S3, MinIO, and any S3-compatible service
+- **Custom public URL** — serve files via a custom domain or CDN
+- **Video / Audio / PDF upload** — optionally upload non-image files too
+- **Ignore patterns** — skip files matching a glob pattern
 
-## First time developing plugins?
+## Installation
 
-Quick starting guide for new plugin devs:
+### From Obsidian Community Plugins
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1. Open **Settings → Community plugins**
+2. Search for **Watermark S3 Uploader**
+3. Click **Install**, then **Enable**
 
-## Releasing new releases
+### Manual
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+1. Download the latest release assets: `main.js`, `manifest.json`, `styles.css`
+2. Copy them to `<vault>/.obsidian/plugins/watermark-s3-uploader/`
+3. Enable the plugin in **Settings → Community plugins**
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Configuration
 
-## Adding your plugin to the community plugin list
+Go to **Settings → Watermark S3 Uploader** and fill in:
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+| Field | Description |
+|---|---|
+| Access Key | S3 / R2 access key ID |
+| Secret Key | S3 / R2 secret access key |
+| Region | Bucket region (e.g. `auto` for R2) |
+| Bucket | Bucket name |
+| Folder | Optional prefix/folder inside the bucket |
+| Custom Endpoint | Required for R2 and non-AWS providers |
+| Custom Image URL | Public base URL for inserted links (e.g. your CDN domain) |
 
-## How to use
+### Cloudflare R2 Quick Setup
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+1. Create a bucket in the Cloudflare R2 dashboard
+2. Generate an API token with **Object Read & Write** permissions
+3. Set **Custom Endpoint** to `https://<account-id>.r2.cloudflarestorage.com`
+4. Set **Region** to `auto`
+5. Set **Custom Image URL** to your public bucket domain
 
-## Manually installing the plugin
+## Usage
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+- **Paste** an image (Ctrl/Cmd+V) in any note — the plugin intercepts it, uploads, and inserts `![](url)`
+- **Drag and drop** an image onto the editor (enable "Upload on drag" in settings)
+- **Command palette** → `Upload clipboard image` to upload manually
 
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+## Watermark
 
-## Funding URL
+Enable text or logo watermark in settings. Use the **live preview** canvas to adjust position, opacity, font, and offset before saving.
 
-You can include funding URLs where people who use your plugin can financially support it.
+## Credits
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+Based on [jvsteiner/s3-image-uploader](https://github.com/jvsteiner/s3-image-uploader) (MIT License).
+Extended with WebP conversion, image compression, and watermark support by [ClaudiaFang](https://github.com/firstsun-dev).
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+## License
 
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
-
-## API Documentation
-
-See https://docs.obsidian.md
+MIT
