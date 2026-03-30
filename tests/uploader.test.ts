@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { wrapFileDependingOnType, generateFileHash } from "../uploader";
+import { wrapFileDependingOnType, generateFileHash } from "../src/uploader";
 
 describe("wrapFileDependingOnType", () => {
 	it("wraps image", () => {
