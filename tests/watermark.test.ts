@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildFont, resolvePosition } from "../watermark";
-import type { R2UploaderSettings } from "../settings";
+import { buildFont, resolvePosition } from "../src/watermark";
+import type { R2UploaderSettings } from "../src/settings";
 
 const base: R2UploaderSettings = {
 	accessKey: "", secretKey: "", region: "", bucket: "", folder: "",
