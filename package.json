@@ -9,14 +9,15 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"deploy": "node esbuild.config.mjs production && cp main.js manifest.json styles.css ../../src/content/.obsidian/plugins/watermark-s3-uploader/",
 		"prepare": "husky",
-		"lint": "eslint --ext .ts *.ts"
+		"lint": "eslint --ext .ts *.ts",
+		"test": "vitest run"
 	},
 	"keywords": [],
 	"author": "ClaudiaFang",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/mime-types": "^2.1.1",
-		"@types/node": "^18.11.18",
+		"@types/node": "^20.19.37",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"browser-resolve": "^2.0.0",
@@ -27,7 +28,8 @@
 		"obsidian": "latest",
 		"process": "^0.11.10",
 		"tslib": "2.4.0",
-		"typescript": "4.7.4"
+		"typescript": "4.7.4",
+		"vitest": "^4.1.2"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "3.317.0",
