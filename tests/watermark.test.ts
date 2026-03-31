@@ -21,6 +21,7 @@ const base: R2UploaderSettings = {
 	watermarkLogoOpacity: 0.5, watermarkLogoPosition: "bottom-right",
 	watermarkLogoOffsetX: 0, watermarkLogoOffsetY: 0,
 	previewBackground: "checker", previewBackgroundColor: "#888888", debugMode: false,
+	uploadSeq: 0,
 };
 
 describe("buildFont", () => {

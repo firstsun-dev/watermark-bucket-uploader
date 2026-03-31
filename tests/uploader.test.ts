@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { wrapFileDependingOnType, generateFileHash } from "../src/uploader";
+import { wrapFileDependingOnType, formatTimestamp } from "../src/uploader";
 
 describe("wrapFileDependingOnType", () => {
 	it("wraps image", () => {
@@ -44,22 +44,15 @@ describe("wrapFileDependingOnType", () => {
 	});
 });
 
-describe("generateFileHash", () => {
-	it("returns a 32-char hex string", async () => {
-		const data = new Uint8Array([1, 2, 3, 4]);
-		const hash = await generateFileHash(data);
-		expect(hash).toHaveLength(32);
-		expect(hash).toMatch(/^[0-9a-f]+$/);
+describe("formatTimestamp", () => {
+	it("returns a 14-char numeric string", () => {
+		const ts = formatTimestamp(new Date("2026-03-31T15:45:23"));
+		expect(ts).toHaveLength(14);
+		expect(ts).toMatch(/^\d{14}$/);
 	});
 
-	it("same input produces same hash", async () => {
-		const data = new Uint8Array([10, 20, 30]);
-		expect(await generateFileHash(data)).toBe(await generateFileHash(data));
-	});
-
-	it("different input produces different hash", async () => {
-		const a = await generateFileHash(new Uint8Array([1]));
-		const b = await generateFileHash(new Uint8Array([2]));
-		expect(a).not.toBe(b);
+	it("formats date correctly", () => {
+		const ts = formatTimestamp(new Date("2026-03-31T09:05:03"));
+		expect(ts).toBe("20260331090503");
 	});
 });
