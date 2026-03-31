@@ -75,6 +75,9 @@ export interface R2UploaderSettings {
 	// Preview background
 	previewBackground: "checker" | "white" | "black" | "custom";
 	previewBackgroundColor: string;
+	// Preview resolution
+	previewResolution: "720p" | "1080p" | "4k" | "custom";
+	previewResolutionCustom: string;
 	// Debug
 	debugMode: boolean;
 	// Upload sequence counter
@@ -130,6 +133,8 @@ export const DEFAULT_SETTINGS: R2UploaderSettings = {
 	watermarkLogoOffsetY: 0,
 	previewBackground: "checker",
 	previewBackgroundColor: "#888888",
+	previewResolution: "1080p",
+	previewResolutionCustom: "1920x1080",
 	debugMode: false,
 	uploadSeq: 0,
 };
@@ -169,11 +174,26 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		if (!canvas) return;
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
-		const dpr = window.devicePixelRatio || 1;
-		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-		const W = 400;
-		const H = 225;
+
 		const s = this.plugin.settings;
+		// Resolve canvas resolution from setting
+		const resMap: Record<string, [number, number]> = {
+			"720p": [1280, 720],
+			"1080p": [1920, 1080],
+			"4k": [3840, 2160],
+		};
+		let W: number, H: number;
+		if (s.previewResolution === "custom") {
+			const parts = s.previewResolutionCustom.toLowerCase().split(/[x×,\s]+/);
+			W = parseInt(parts[0]) || 1920;
+			H = parseInt(parts[1]) || 1080;
+		} else {
+			[W, H] = resMap[s.previewResolution] ?? [1920, 1080];
+		}
+		// Set canvas buffer to full target resolution; CSS keeps display at 400×225
+		canvas.width = W;
+		canvas.height = H;
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
 
 		const bg = s.previewBackground;
 		if (bg === "checker") {
@@ -214,7 +234,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 	}
 
 	private refreshPreview(): void {
-		this.renderPreview().catch(() => {/* ignore */});
+		this.renderPreview().catch(() => {/* ignore */ });
 	}
 
 	// ── helpers ───────────────────────────────────────────────────────────────
@@ -460,9 +480,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 
 		const previewWrap = wmEl.createDiv({ cls: "r2-preview-wrap" });
 		this.previewCanvas = previewWrap.createEl("canvas", { cls: "r2-preview-canvas" });
-		const dpr = window.devicePixelRatio || 1;
-		this.previewCanvas.width = 400 * dpr;
-		this.previewCanvas.height = 225 * dpr;
+		// width/height are set dynamically in renderPreview() based on previewResolution
 		this.previewCanvas.style.width = "400px";
 		this.previewCanvas.style.height = "225px";
 
@@ -493,7 +511,46 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		customColorSetting.settingEl.style.display =
 			this.plugin.settings.previewBackground === "custom" ? "" : "none";
 
-		previewWrap.createEl("p", { text: "Preview (400×225 px)", cls: "r2-preview-label" });
+		// Preview resolution control
+		// eslint-disable-next-line prefer-const
+		let customResSetting: Setting;
+		const resSetting = new Setting(previewWrap)
+			.setName("Preview resolution")
+			.setDesc("Canvas resolution for the watermark preview. Higher = more accurate proportions.")
+			.addDropdown((d) =>
+				d.addOptions({
+					"720p": "720p (1280×720)",
+					"1080p": "1080p (1920×1080)",
+					"4k": "4K (3840×2160)",
+					"custom": "Custom…",
+				})
+					.setValue(this.plugin.settings.previewResolution)
+					.onChange(async (v: string) => {
+						this.plugin.settings.previewResolution = v as R2UploaderSettings["previewResolution"];
+						await this.plugin.saveSettings();
+						customResSetting.settingEl.style.display = v === "custom" ? "" : "none";
+						this.refreshPreview();
+					}));
+		void resSetting;
+		customResSetting = new Setting(previewWrap)
+			.setName("Custom resolution")
+			.setDesc('Width × Height in pixels, e.g. "2560x1440"')
+			.addText((t) =>
+				t.setPlaceholder("1920x1080")
+					.setValue(this.plugin.settings.previewResolutionCustom)
+					.onChange(async (v) => {
+						this.plugin.settings.previewResolutionCustom = v.trim();
+						await this.plugin.saveSettings();
+						this.refreshPreview();
+					}));
+		customResSetting.settingEl.style.display =
+			this.plugin.settings.previewResolution === "custom" ? "" : "none";
+
+		const resLabels: Record<string, string> = { "720p": "1280×720", "1080p": "1920×1080", "4k": "3840×2160" };
+		previewWrap.createEl("p", {
+			text: `Preview (${resLabels[this.plugin.settings.previewResolution] ?? this.plugin.settings.previewResolutionCustom})`,
+			cls: "r2-preview-label"
+		});
 		this.refreshPreview();
 
 		// ── Text watermark ────────────────────────────────────────────────────
