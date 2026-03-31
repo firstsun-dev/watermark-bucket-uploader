@@ -20,7 +20,9 @@ const base: R2UploaderSettings = {
 	watermarkLogoEnabled: false, watermarkLogoPath: "", watermarkLogoSize: 15,
 	watermarkLogoOpacity: 0.5, watermarkLogoPosition: "bottom-right",
 	watermarkLogoOffsetX: 0, watermarkLogoOffsetY: 0,
-	previewBackground: "checker", previewBackgroundColor: "#888888", debugMode: false,
+	previewBackground: "checker", previewBackgroundColor: "#888888",
+	previewResolution: "1080p", previewResolutionCustom: "1920x1080",
+	debugMode: false,
 	uploadSeq: 0,
 };
 
