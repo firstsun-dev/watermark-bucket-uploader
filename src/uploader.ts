@@ -117,12 +117,10 @@ export async function uploadFile(
 	return urlString;
 }
 
-export async function generateFileHash(data: Uint8Array): Promise<string> {
-	const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-	return Array.from(new Uint8Array(hashBuffer))
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("")
-		.slice(0, 32);
+export function formatTimestamp(d: Date): string {
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}` +
+		`${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 }
 
 export const wrapFileDependingOnType = (location: string, type: string, localBase: string) => {

@@ -2,7 +2,7 @@ import { Editor, Notice } from "obsidian";
 import { filesize } from "filesize";
 import { R2UploaderSettings } from "./settings";
 import { compressImage, convertToWebP, applyWatermark } from "./imageProcessor";
-import { uploadFile, generateFileHash, wrapFileDependingOnType } from "./uploader";
+import { uploadFile, formatTimestamp, wrapFileDependingOnType } from "./uploader";
 import { S3Client } from "@aws-sdk/client-s3";
 
 export async function replaceText(
@@ -41,6 +41,7 @@ export async function pasteHandler(
 	getFrontmatter: (file: { name: string; path: string }) => Record<string, unknown> | undefined,
 	shouldIgnore: () => boolean,
 	log: (...args: unknown[]) => void,
+	saveSettings: () => Promise<void>,
 	directFile?: File,
 ): Promise<void> {
 	if (ev?.defaultPrevented) return;
@@ -79,7 +80,11 @@ export async function pasteHandler(
 
 	const cursorPos = editor.getCursor();
 
-	const uploads = files.map(async (file) => {
+	const startSeq = settings.uploadSeq;
+	settings.uploadSeq += files.length;
+	await saveSettings();
+
+	const uploads = files.map(async (file, fileIndex) => {
 		let thisType = "";
 		if (file.type.match(/video.*/) && uploadVideo) thisType = "video";
 		else if (file.type.match(/audio.*/) && uploadAudio) thisType = "audio";
@@ -114,9 +119,11 @@ export async function pasteHandler(
 			}
 
 			const buf = await file.arrayBuffer();
-			const digest = await generateFileHash(new Uint8Array(buf));
+			const seq = startSeq + fileIndex;
+			const seqStr = String(seq).padStart(4, "0");
+			const ts = formatTimestamp(new Date());
 			const ext = file.name.split(".").pop() ?? "bin";
-			const newFileName = `${digest}.${ext}`;
+			const newFileName = `${seqStr}_${ts}.${ext}`;
 			log(`pipeline: final — ${newFileName} (${filesize(buf.byteLength)})`);
 
 			let folder = localUpload

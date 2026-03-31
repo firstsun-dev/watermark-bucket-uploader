@@ -77,6 +77,8 @@ export interface R2UploaderSettings {
 	previewBackgroundColor: string;
 	// Debug
 	debugMode: boolean;
+	// Upload sequence counter
+	uploadSeq: number;
 }
 
 export const DEFAULT_SETTINGS: R2UploaderSettings = {
@@ -129,6 +131,7 @@ export const DEFAULT_SETTINGS: R2UploaderSettings = {
 	previewBackground: "checker",
 	previewBackgroundColor: "#888888",
 	debugMode: false,
+	uploadSeq: 0,
 };
 
 export const wrapTextWithPasswordHide = (text: TextComponent) => {

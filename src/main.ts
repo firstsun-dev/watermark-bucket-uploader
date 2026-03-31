@@ -134,6 +134,7 @@ export default class R2UploaderPlugin extends Plugin {
 			},
 			() => this.shouldIgnoreCurrentFile(),
 			(...args) => this.log(...args),
+			() => this.saveSettings(),
 			directFile,
 		);
 	}
