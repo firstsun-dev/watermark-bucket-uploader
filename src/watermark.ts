@@ -1,6 +1,6 @@
 import { R2UploaderSettings, WatermarkPosition } from "./settings";
 
-export function buildFont(s: R2UploaderSettings, imageWidth: number): string {
+export function buildFont(s: R2UploaderSettings, imageWidth: number): { font: string; size: number } {
 	const autoSize = Math.min(120, Math.max(14, Math.round(imageWidth * 0.02)));
 	const size = s.watermarkFontSize > 0 ? s.watermarkFontSize : autoSize;
 	const parts: string[] = [];
@@ -8,7 +8,7 @@ export function buildFont(s: R2UploaderSettings, imageWidth: number): string {
 	if (s.watermarkItalic) parts.push("italic");
 	parts.push(`${size}px`);
 	parts.push(s.watermarkFontFamily || "Arial");
-	return parts.join(" ");
+	return { font: parts.join(" "), size };
 }
 
 export function resolvePosition(
@@ -42,12 +42,11 @@ export function paintTextWatermark(
 	s: R2UploaderSettings,
 ): void {
 	if (!s.watermarkEnabled || !s.watermarkText) return;
-	const font = buildFont(s, w);
+	const { font, size: textH } = buildFont(s, w);
 	ctx.save();
 	ctx.font = font;
 	const metrics = ctx.measureText(s.watermarkText);
 	const textW = metrics.width;
-	const textH = parseInt(font, 10) || 14;
 	const padding = Math.round(w * 0.015);
 	const { x, y } = resolvePosition(
 		s.watermarkPosition, w, h, textW, textH, padding,

@@ -236,7 +236,11 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 	}
 
 	private refreshPreview(): void {
-		this.renderPreview().catch(() => {/* ignore */ });
+		this.renderPreview().catch((e) => {
+			if (this.plugin.settings.debugMode) {
+				console.debug("[R2Uploader] Preview render failed:", e);
+			}
+		});
 	}
 
 	// ── helpers ───────────────────────────────────────────────────────────────
@@ -523,7 +527,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		const previewWrap = wmEl.createDiv({ cls: "r2-preview-wrap" });
 		this.previewCanvas = previewWrap.createEl("canvas", { cls: "r2-preview-canvas" });
 
-		const bgSetting = new Setting(previewWrap)
+		new Setting(previewWrap)
 			.setName("Preview background")
 			.setClass("r2-preview-bg-setting")
 			.addDropdown((d) =>
@@ -535,7 +539,6 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 						customColorSetting.settingEl.toggleClass("is-hidden", v !== "custom");
 						this.refreshPreview();
 					}));
-		void bgSetting;
 
 		const customColorSetting = new Setting(previewWrap)
 			.setName("Background color");
@@ -552,7 +555,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		customColorSetting.settingEl.toggleClass("is-hidden", this.plugin.settings.previewBackground !== "custom");
 
 		// Preview resolution control
-		const resSetting = new Setting(previewWrap)
+		new Setting(previewWrap)
 			.setName("Preview resolution")
 			.setDesc("Canvas resolution for the watermark preview. Higher = more accurate proportions.")
 			.addDropdown((d) =>
@@ -569,7 +572,6 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 						customResSetting.settingEl.toggleClass("is-hidden", v !== "custom");
 						this.refreshPreview();
 					}));
-		void resSetting;
 
 		const customResSetting = new Setting(previewWrap)
 			.setName("Custom resolution")

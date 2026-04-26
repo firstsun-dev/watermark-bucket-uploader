@@ -28,32 +28,34 @@ const base: R2UploaderSettings = {
 
 describe("buildFont", () => {
 	it("uses auto size when fontSize is 0", () => {
-		const font = buildFont({ ...base, watermarkFontSize: 0 }, 1000);
+		const { font, size } = buildFont({ ...base, watermarkFontSize: 0 }, 1000);
 		expect(font).toMatch(/^\d+px Arial$/);
+		expect(size).toBeGreaterThan(0);
 	});
 
 	it("uses explicit fontSize when set", () => {
-		const font = buildFont({ ...base, watermarkFontSize: 48 }, 1000);
+		const { font, size } = buildFont({ ...base, watermarkFontSize: 48 }, 1000);
 		expect(font).toContain("48px");
+		expect(size).toBe(48);
 	});
 
 	it("prepends bold", () => {
-		const font = buildFont({ ...base, watermarkBold: true, watermarkFontSize: 20 }, 1000);
+		const { font } = buildFont({ ...base, watermarkBold: true, watermarkFontSize: 20 }, 1000);
 		expect(font).toMatch(/^bold /);
 	});
 
 	it("prepends italic", () => {
-		const font = buildFont({ ...base, watermarkItalic: true, watermarkFontSize: 20 }, 1000);
+		const { font } = buildFont({ ...base, watermarkItalic: true, watermarkFontSize: 20 }, 1000);
 		expect(font).toMatch(/^italic /);
 	});
 
 	it("prepends bold italic", () => {
-		const font = buildFont({ ...base, watermarkBold: true, watermarkItalic: true, watermarkFontSize: 20 }, 1000);
+		const { font } = buildFont({ ...base, watermarkBold: true, watermarkItalic: true, watermarkFontSize: 20 }, 1000);
 		expect(font).toMatch(/^bold italic /);
 	});
 
 	it("uses custom font family", () => {
-		const font = buildFont({ ...base, watermarkFontFamily: "Georgia", watermarkFontSize: 20 }, 1000);
+		const { font } = buildFont({ ...base, watermarkFontFamily: "Georgia", watermarkFontSize: 20 }, 1000);
 		expect(font).toContain("Georgia");
 	});
 });
