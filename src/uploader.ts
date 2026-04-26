@@ -7,15 +7,20 @@ import { FetchHttpHandler, FetchHttpHandlerOptions } from "@smithy/fetch-http-ha
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { R2UploaderSettings } from "./settings";
 
+const DEFAULT_PDF_HEIGHT = 800;
+const DEFAULT_PPT_HEIGHT = "600px";
+
 // ── HTTP Handler ──────────────────────────────────────────────────────────────
 // Based on AWS SDK FetchHttpHandler (Apache 2.0 License)
 
 export class ObsHttpHandler extends FetchHttpHandler {
 	requestTimeoutInMs: number | undefined;
+
 	constructor(options?: FetchHttpHandlerOptions) {
 		super(options);
 		this.requestTimeoutInMs = options?.requestTimeout;
 	}
+
 	async handle(
 		request: HttpRequest,
 		{ abortSignal }: HttpHandlerOptions = {},
@@ -32,8 +37,9 @@ export class ObsHttpHandler extends FetchHttpHandler {
 			if (qs) path += `?${qs}`;
 		}
 
-		const { port, method } = request;
-		const url = `${request.protocol}//${request.hostname}${port ? `:${port}` : ""}${path}`;
+	const { port, method, hostname, protocol } = request;
+		const portStr = port ? `:${port}` : "";
+		const url = `${protocol}//${hostname}${portStr}${path}`;
 
 		const transformedHeaders: Record<string, string> = {};
 		for (const key of Object.keys(request.headers)) {
@@ -42,17 +48,14 @@ export class ObsHttpHandler extends FetchHttpHandler {
 			transformedHeaders[lower] = request.headers[key];
 		}
 
-		let contentType: string | undefined;
-		if (transformedHeaders["content-type"]) contentType = transformedHeaders["content-type"];
+		const contentType = transformedHeaders["content-type"];
 
 		let transformedBody: string | ArrayBuffer | undefined;
 		const rawBody = request.body as unknown;
 		if (typeof rawBody === "string" || rawBody instanceof ArrayBuffer || rawBody === undefined) {
 			transformedBody = rawBody;
-		}
-
-		if (ArrayBuffer.isView(request.body)) {
-			transformedBody = request.body.buffer.slice(request.body.byteOffset, request.body.byteOffset + request.body.byteLength);
+		} else if (ArrayBuffer.isView(rawBody)) {
+			transformedBody = rawBody.buffer.slice(rawBody.byteOffset, rawBody.byteOffset + rawBody.byteLength);
 		}
 
 		const param: RequestUrlParam = {
@@ -68,7 +71,10 @@ export class ObsHttpHandler extends FetchHttpHandler {
 			const headersLower: Record<string, string> = {};
 			for (const key of Object.keys(rsp.headers)) headersLower[key.toLowerCase()] = rsp.headers[key];
 			const stream = new ReadableStream<Uint8Array>({
-				start(controller) { controller.enqueue(new Uint8Array(rsp.arrayBuffer)); controller.close(); },
+				start(controller) {
+					controller.enqueue(new Uint8Array(rsp.arrayBuffer));
+					controller.close();
+				},
 			});
 			return { response: new HttpResponse({ headers: headersLower, statusCode: rsp.status, body: stream }) };
 		})();
@@ -151,10 +157,10 @@ export const wrapFileDependingOnType = (location: string, type: string, localBas
 	if (type === "audio") return `<audio src="${srcPrefix}${location}" controls />`;
 	if (type === "pdf") {
 		if (localBase) throw new Error("PDFs cannot be embedded in local mode");
-		return `<iframe frameborder=0 border=0 width=100% height=800\n\tsrc="https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(location)}?raw=true">\n\t</iframe>`;
+		return `<iframe frameborder=0 border=0 width=100% height=${DEFAULT_PDF_HEIGHT}\n\tsrc="https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(location)}?raw=true">\n\t</iframe>`;
 	}
 	if (type === "ppt") {
-		return `<iframe\n\t    src='https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(location)}'\n\t    width='100%' height='600px' frameborder='0'>\n\t  </iframe>`;
+		return `<iframe\n\t    src='https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(location)}'\n\t    width='100%' height='${DEFAULT_PPT_HEIGHT}' frameborder='0'>\n\t  </iframe>`;
 	}
 	throw new Error("Unknown file type");
 };

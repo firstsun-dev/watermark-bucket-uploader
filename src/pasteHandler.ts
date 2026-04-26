@@ -5,6 +5,10 @@ import { compressImage, convertToWebP, applyWatermark } from "./imageProcessor";
 import { uploadFile, formatTimestamp, wrapFileDependingOnType, resolveFolder } from "./uploader";
 import { S3Client } from "@aws-sdk/client-s3";
 
+const TABLE_SURROUNDING_CHARS = 20;
+const REFRESH_DELAY = 100;
+const SEQ_PADDING = 4;
+
 export async function replaceText(
 	editor: Editor,
 	target: string,
@@ -14,27 +18,28 @@ export async function replaceText(
 	const position = content.indexOf(target);
 	if (position === -1) return;
 
-	const surroundingBefore = content.substring(Math.max(0, position - 20), position);
+	const surroundingBefore = content.substring(Math.max(0, position - TABLE_SURROUNDING_CHARS), position);
 	const surroundingAfter = content.substring(position + target.length,
-		Math.min(content.length, position + target.length + 20));
+		Math.min(content.length, position + target.length + TABLE_SURROUNDING_CHARS));
 	const isInTable = surroundingBefore.includes("|") && surroundingAfter.includes("|");
 	const from = editor.offsetToPos(position);
 	const to = editor.offsetToPos(position + target.length);
 
 	try {
 		editor.transaction({ changes: [{ from, to, text: replacement }] });
-		if (isInTable) activeWindow.setTimeout(() => { try { editor.refresh(); } catch { /* ignore */ } }, 100);
+		if (isInTable) activeWindow.setTimeout(() => { try { editor.refresh(); } catch { /* ignore */ } }, REFRESH_DELAY);
 	} catch (e) {
 		console.error("[R2Uploader] replaceText error:", e);
 	}
 }
 
 export function detectFileType(file: File, settings: { uploadVideo: boolean; uploadAudio: boolean; uploadPdf: boolean }): string {
-	if (file.type.match(/video.*/) && settings.uploadVideo) return "video";
-	if (file.type.match(/audio.*/) && settings.uploadAudio) return "audio";
-	if (file.type.match(/application\/pdf/) && settings.uploadPdf) return "pdf";
-	if (file.type.match(/image.*/)) return "image";
-	if (file.type.match(/presentation.*/) || file.type.match(/powerpoint.*/)) return "ppt";
+	const type = file.type.toLowerCase();
+	if (type.includes("video") && settings.uploadVideo) return "video";
+	if (type.includes("audio") && settings.uploadAudio) return "audio";
+	if (type.includes("application/pdf") && settings.uploadPdf) return "pdf";
+	if (type.includes("image")) return "image";
+	if (type.includes("presentation") || type.includes("powerpoint")) return "ppt";
 	return "";
 }
 
@@ -68,6 +73,54 @@ async function processFile(
 		log(`pipeline: watermark skipped (text=${settings.watermarkEnabled}, logo=${settings.watermarkLogoEnabled})`);
 	}
 	return processedFile;
+}
+
+async function handleFileUpload(
+	file: File,
+	fileIndex: number,
+	startSeq: number,
+	thisType: string,
+	settings: R2UploaderSettings,
+	s3: S3Client,
+	localUpload: boolean,
+	folder: string,
+	noteBasename: string,
+	readBinary: (path: string) => Promise<ArrayBuffer>,
+	writeBinary: (path: string, data: Uint8Array) => Promise<void>,
+	getFilePath: ((path: string) => string) | null,
+	log: (...args: unknown[]) => void,
+): Promise<string | undefined> {
+	try {
+		log(`pipeline: start — "${file.name}" (${filesize(file.size)}, type=${thisType})`);
+		const processedFile = await processFile(file, thisType, settings, readBinary, log);
+
+		const buf = await processedFile.arrayBuffer();
+		const seq = startSeq + fileIndex;
+		const seqStr = String(seq).padStart(SEQ_PADDING, "0");
+		const ts = formatTimestamp(new Date());
+		const ext = processedFile.name.split(".").pop() ?? "bin";
+		const newFileName = `${seqStr}_${ts}.${ext}`;
+		log(`pipeline: final — ${newFileName} (${filesize(buf.byteLength)})`);
+
+		const keyFolder = resolveFolder(folder, noteBasename, new Date());
+		const key = keyFolder ? `${keyFolder}/${newFileName}` : newFileName;
+		const uploadableFile = new File([buf], newFileName, { type: processedFile.type });
+
+		let url: string;
+		if (!localUpload) {
+			url = await uploadFile(s3, settings, uploadableFile, key);
+		} else {
+			await writeBinary(key, new Uint8Array(buf));
+			url = getFilePath ? getFilePath(key) : key;
+		}
+
+		log(`pipeline: uploaded → ${url}`);
+		return wrapFileDependingOnType(url, thisType, "");
+	} catch (error) {
+		console.error("[R2Uploader]", error);
+		const message = error instanceof Error ? error.message : String(error);
+		return `Error uploading file: ${message}`;
+	}
 }
 
 export async function pasteHandler(
@@ -125,50 +178,24 @@ export async function pasteHandler(
 	settings.uploadSeq += files.length;
 	await saveSettings();
 
-	const uploads = files.map(async (file, fileIndex) => {
+	const folder = localUpload
+		? ((fm.uploadFolder as string | undefined) ?? settings.localUploadFolder)
+		: ((fm.uploadFolder as string | undefined) ?? settings.folder);
+
+	const uploads = files.map((file, fileIndex) => {
 		const thisType = detectFileType(file, { uploadVideo, uploadAudio, uploadPdf });
-		if (!thisType) return;
+		if (!thisType) return Promise.resolve(undefined);
 
-		try {
-			log(`pipeline: start — "${file.name}" (${filesize(file.size)}, type=${thisType})`);
-			const processedFile = await processFile(file, thisType, settings, readBinary, log);
-
-			const buf = await processedFile.arrayBuffer();
-			const seq = startSeq + fileIndex;
-			const seqStr = String(seq).padStart(4, "0");
-			const ts = formatTimestamp(new Date());
-			const ext = processedFile.name.split(".").pop() ?? "bin";
-			const newFileName = `${seqStr}_${ts}.${ext}`;
-			log(`pipeline: final — ${newFileName} (${filesize(buf.byteLength)})`);
-
-			const folder = localUpload
-				? ((fm.uploadFolder as string | undefined) ?? settings.localUploadFolder)
-				: ((fm.uploadFolder as string | undefined) ?? settings.folder);
-
-			const keyFolder = resolveFolder(folder, noteFile.basename, new Date());
-			const key = keyFolder ? `${keyFolder}/${newFileName}` : newFileName;
-			const uploadableFile = new File([buf], newFileName, { type: processedFile.type });
-
-			let url: string;
-			if (!localUpload) {
-				url = await uploadFile(s3, settings, uploadableFile, key);
-			} else {
-				await writeBinary(key, new Uint8Array(buf));
-				url = getFilePath ? getFilePath(key) : key;
-			}
-
-			log(`pipeline: uploaded → ${url}`);
-			return wrapFileDependingOnType(url, thisType, "");
-		} catch (error) {
-			console.error("[R2Uploader]", error);
-			const message = error instanceof Error ? error.message : String(error);
-			return `Error uploading file: ${message}`;
-		}
+		return handleFileUpload(
+			file, fileIndex, startSeq, thisType, settings, s3,
+			localUpload, folder, noteFile.basename, readBinary, writeBinary,
+			getFilePath, log,
+		);
 	});
 
 	try {
 		const results = await Promise.all(uploads);
-		const validResults = results.filter((r) => r !== undefined);
+		const validResults = results.filter((r): r is string => r !== undefined);
 		if (validResults.length > 0) {
 			editor.transaction({ changes: [{ from: cursorPos, text: validResults.join("\n") }] });
 			new Notice("All files uploaded successfully");

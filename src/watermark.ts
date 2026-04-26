@@ -1,7 +1,14 @@
 import { R2UploaderSettings, WatermarkPosition } from "./settings";
 
+const FONT_SIZE_FACTOR = 0.02;
+const MIN_FONT_SIZE = 14;
+const MAX_FONT_SIZE = 120;
+const LINE_WIDTH_FACTOR = 0.12;
+const PADDING_FACTOR = 0.015;
+const CHECKERBOARD_SIZE = 12;
+
 export function buildFont(s: R2UploaderSettings, imageWidth: number): { font: string; size: number } {
-	const autoSize = Math.min(120, Math.max(14, Math.round(imageWidth * 0.02)));
+	const autoSize = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.round(imageWidth * FONT_SIZE_FACTOR)));
 	const size = s.watermarkFontSize > 0 ? s.watermarkFontSize : autoSize;
 	const parts: string[] = [];
 	if (s.watermarkBold) parts.push("bold");
@@ -47,13 +54,13 @@ export function paintTextWatermark(
 	ctx.font = font;
 	const metrics = ctx.measureText(s.watermarkText);
 	const textW = metrics.width;
-	const padding = Math.round(w * 0.015);
+	const padding = Math.round(w * PADDING_FACTOR);
 	const { x, y } = resolvePosition(
 		s.watermarkPosition, w, h, textW, textH, padding,
 		s.watermarkOffsetX, s.watermarkOffsetY,
 	);
 	ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
-	ctx.lineWidth = textH * 0.12;
+	ctx.lineWidth = textH * LINE_WIDTH_FACTOR;
 	ctx.lineJoin = "round";
 	ctx.strokeText(s.watermarkText, x, y);
 	ctx.fillStyle = s.watermarkColor;
@@ -69,12 +76,17 @@ export async function paintLogoWatermark(
 	logoData: ArrayBuffer,
 ): Promise<void> {
 	const ext = s.watermarkLogoPath.split(".").pop()?.toLowerCase() ?? "";
-	const mimeType =
-		ext === "png" ? "image/png" :
-		ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
-		ext === "webp" ? "image/webp" :
-		ext === "svg" ? "image/svg+xml" :
-		"image/png";
+	
+	let mimeType = "image/png";
+	if (ext === "png") {
+		mimeType = "image/png";
+	} else if (ext === "jpg" || ext === "jpeg") {
+		mimeType = "image/jpeg";
+	} else if (ext === "webp") {
+		mimeType = "image/webp";
+	} else if (ext === "svg") {
+		mimeType = "image/svg+xml";
+	}
 
 	await new Promise<void>((resolve, reject) => {
 		const blob = new Blob([logoData], { type: mimeType });
@@ -83,7 +95,7 @@ export async function paintLogoWatermark(
 		img.onload = () => {
 			const logoW = Math.round((w * s.watermarkLogoSize) / 100);
 			const logoH = Math.round((img.naturalHeight / img.naturalWidth) * logoW);
-			const padding = Math.round(w * 0.015);
+			const padding = Math.round(w * PADDING_FACTOR);
 			const { x, y } = resolvePosition(
 				s.watermarkLogoPosition, w, h, logoW, logoH, padding,
 				s.watermarkLogoOffsetX, s.watermarkLogoOffsetY,
@@ -108,11 +120,10 @@ export function paintCheckerboard(
 	w: number,
 	h: number,
 ): void {
-	const size = 12;
-	for (let row = 0; row * size < h; row++) {
-		for (let col = 0; col * size < w; col++) {
+	for (let row = 0; row * CHECKERBOARD_SIZE < h; row++) {
+		for (let col = 0; col * CHECKERBOARD_SIZE < w; col++) {
 			ctx.fillStyle = (row + col) % 2 === 0 ? "#cccccc" : "#ffffff";
-			ctx.fillRect(col * size, row * size, size, size);
+			ctx.fillRect(col * CHECKERBOARD_SIZE, row * CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE);
 		}
 	}
 }
