@@ -1,7 +1,7 @@
 {
 	"id": "watermark-s3-uploader",
 	"name": "Watermark S3 Uploader",
-	"minAppVersion": "0.15.0",
+	"minAppVersion": "1.6.6",
 	"description": "Upload images to Cloudflare R2 or any S3-compatible storage. Features: WebP conversion, image compression, text & logo watermark with live preview.",
 	"author": "ClaudiaFang",
 	"authorUrl": "https://github.com/firstsun-dev",

@@ -34,7 +34,6 @@ export class ObsHttpHandler extends FetchHttpHandler {
 
 		const { port, method } = request;
 		const url = `${request.protocol}//${request.hostname}${port ? `:${port}` : ""}${path}`;
-		const body = method === "GET" || method === "HEAD" ? undefined : request.body;
 
 		const transformedHeaders: Record<string, string> = {};
 		for (const key of Object.keys(request.headers)) {
@@ -46,8 +45,15 @@ export class ObsHttpHandler extends FetchHttpHandler {
 		let contentType: string | undefined;
 		if (transformedHeaders["content-type"]) contentType = transformedHeaders["content-type"];
 
-		let transformedBody: string | ArrayBuffer | undefined = body;
-		if (ArrayBuffer.isView(body)) transformedBody = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
+		let transformedBody: string | ArrayBuffer | undefined;
+		const rawBody = request.body as unknown;
+		if (typeof rawBody === "string" || rawBody instanceof ArrayBuffer || rawBody === undefined) {
+			transformedBody = rawBody;
+		}
+
+		if (ArrayBuffer.isView(request.body)) {
+			transformedBody = request.body.buffer.slice(request.body.byteOffset, request.body.byteOffset + request.body.byteLength);
+		}
 
 		const param: RequestUrlParam = {
 			body: transformedBody,
@@ -57,28 +63,33 @@ export class ObsHttpHandler extends FetchHttpHandler {
 			contentType,
 		};
 
-		const raceOfPromises = [
-			requestUrl(param).then((rsp) => {
+		const timeoutFn = requestTimeout as (ms?: number) => Promise<never>;
+		const raceOfPromises: Promise<unknown>[] = [
+			(async (): Promise<{ response: HttpResponse }> => {
+				const rsp = await requestUrl(param);
 				const headersLower: Record<string, string> = {};
 				for (const key of Object.keys(rsp.headers)) headersLower[key.toLowerCase()] = rsp.headers[key];
 				const stream = new ReadableStream<Uint8Array>({
 					start(controller) { controller.enqueue(new Uint8Array(rsp.arrayBuffer)); controller.close(); },
 				});
 				return { response: new HttpResponse({ headers: headersLower, statusCode: rsp.status, body: stream }) };
-			}),
-			requestTimeout(this.requestTimeoutInMs),
+			})(),
+			timeoutFn(this.requestTimeoutInMs),
 		];
 
 		if (abortSignal) {
-			raceOfPromises.push(new Promise<never>((_, reject) => {
-				abortSignal.onabort = () => {
-					const err = new Error("Request aborted");
-					err.name = "AbortError";
-					reject(err);
-				};
-			}));
+			const abortFn = async (): Promise<never> => {
+				await new Promise<void>((resolve) => {
+					abortSignal.onabort = () => resolve();
+				});
+				const err = new Error("Request aborted");
+				err.name = "AbortError";
+				throw err;
+			};
+			raceOfPromises.push(abortFn());
 		}
-		return Promise.race(raceOfPromises);
+		const result = await Promise.race(raceOfPromises);
+		return result as { response: HttpResponse };
 	}
 }
 
@@ -121,6 +132,14 @@ export function formatTimestamp(d: Date): string {
 	const pad = (n: number) => String(n).padStart(2, "0");
 	return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}` +
 		`${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+export function resolveFolder(folder: string, noteBasename: string, now: Date): string {
+	return folder
+		.replace("${year}", now.getFullYear().toString())
+		.replace("${month}", String(now.getMonth() + 1).padStart(2, "0"))
+		.replace("${day}", String(now.getDate()).padStart(2, "0"))
+		.replace("${basename}", noteBasename.replace(/ /g, "-"));
 }
 
 export const wrapFileDependingOnType = (location: string, type: string, localBase: string) => {
