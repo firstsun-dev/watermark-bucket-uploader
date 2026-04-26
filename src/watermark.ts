@@ -96,9 +96,9 @@ export async function paintLogoWatermark(
 			URL.revokeObjectURL(url);
 			resolve();
 		};
-		img.onerror = (e) => {
+		img.onerror = () => {
 			URL.revokeObjectURL(url);
-			reject(new Error(`Logo image load failed: ${e}`));
+			reject(new Error("Logo image load failed"));
 		};
 		img.src = url;
 	});

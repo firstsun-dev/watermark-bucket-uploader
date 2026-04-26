@@ -33,7 +33,7 @@ export async function convertToWebP(
 		const objectUrl = URL.createObjectURL(file);
 		img.onload = () => {
 			log(`convertToWebP: ${img.naturalWidth}x${img.naturalHeight}`);
-			const canvas = document.createElement("canvas");
+			const canvas = activeDocument.createElement("canvas");
 			canvas.width = img.naturalWidth;
 			canvas.height = img.naturalHeight;
 			const ctx = canvas.getContext("2d");
@@ -64,7 +64,7 @@ export async function applyWatermark(
 		const objectUrl = URL.createObjectURL(file);
 		img.onload = async () => {
 			log(`applyWatermark: ${img.naturalWidth}x${img.naturalHeight}`);
-			const canvas = document.createElement("canvas");
+			const canvas = activeDocument.createElement("canvas");
 			canvas.width = img.naturalWidth;
 			canvas.height = img.naturalHeight;
 			const ctx = canvas.getContext("2d");

@@ -1,5 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { wrapFileDependingOnType, formatTimestamp } from "../src/uploader";
+import { wrapFileDependingOnType, formatTimestamp, resolveFolder } from "../src/uploader";
+
+describe("resolveFolder", () => {
+	it("replaces placeholders", () => {
+		const now = new Date("2026-04-26T12:00:00");
+		const result = resolveFolder("blog/${year}/${month}/${day}/${basename}", "My Note", now);
+		expect(result).toBe("blog/2026/04/26/My-Note");
+	});
+
+	it("handles missing placeholders", () => {
+		const result = resolveFolder("static", "note", new Date());
+		expect(result).toBe("static");
+	});
+});
 
 describe("wrapFileDependingOnType", () => {
 	it("wraps image", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildFont, resolvePosition } from "../src/watermark";
+import { buildFont, resolvePosition, paintCheckerboard } from "../src/watermark";
 import type { R2UploaderSettings } from "../src/settings";
 
 const base: R2UploaderSettings = {
@@ -89,5 +89,21 @@ describe("resolvePosition", () => {
 		const { x, y } = resolvePosition("bottom-right", W, H, eW, eH, pad, 10, 5);
 		expect(x).toBe(W - eW - pad + Math.round(W * 10 / 100));
 		expect(y).toBe(H - pad + Math.round(H * 5 / 100));
+	});
+});
+
+describe("paintCheckerboard", () => {
+	it("calls fillRect multiple times", () => {
+		const ctx = {
+			fillStyle: "",
+			fillRect: () => { /* ignore */ },
+		} as unknown as CanvasRenderingContext2D;
+		const spy = {
+			fillRect: 0,
+		};
+		ctx.fillRect = () => { spy.fillRect++; };
+		
+		paintCheckerboard(ctx, 100, 100);
+		expect(spy.fillRect).toBeGreaterThan(0);
 	});
 });

@@ -23,20 +23,8 @@
     display: none;
 }
 
-/* Chevron arrow — rendered as a pseudo-element after the icon */
-.r2-section-summary::before {
-    content: "";
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 4px 0 4px 6px;
-    border-color: transparent transparent transparent currentColor;
-    opacity: 0.5;
-    flex-shrink: 0;
-    transition: transform 0.15s;
-}
-
-details[open] > .r2-section-summary::before {
+/* Chevron arrow replaced by lucide icon transitions */
+details[open] > .r2-section-summary .r2-chevron svg {
     transform: rotate(90deg);
 }
 
@@ -50,6 +38,7 @@ details[open] > .r2-section-summary::before {
 .r2-section-icon svg {
     width: 15px;
     height: 15px;
+    transition: transform 0.15s ease-in-out;
 }
 
 .r2-section-body {
@@ -82,8 +71,10 @@ details[open] > .r2-section-summary::before {
 }
 
 .r2-preview-canvas {
-    width: 400px;
-    height: 225px;
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    aspect-ratio: 16 / 9;
     border-radius: 4px;
     border: 1px solid var(--background-modifier-border);
     display: block;
@@ -92,4 +83,24 @@ details[open] > .r2-section-summary::before {
 .r2-preview-label {
     font-size: 0.75em;
     color: var(--text-muted);
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.r2-success {
+    color: var(--color-green) !important;
+}
+
+.r2-error {
+    color: var(--color-red) !important;
+}
+
+.r2-btn-success {
+    background-color: var(--color-green) !important;
+}
+
+.r2-btn-error {
+    background-color: var(--color-red) !important;
 }

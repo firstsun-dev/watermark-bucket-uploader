@@ -1,10 +1,12 @@
 import {
 	App,
+	Notice,
 	PluginSettingTab,
 	Setting,
 	TextComponent,
 	setIcon,
 } from "obsidian";
+import { HeadBucketCommand } from "@aws-sdk/client-s3";
 import { paintCheckerboard, paintLogoWatermark, paintTextWatermark, resolvePosition } from "./watermark";
 import type R2UploaderPlugin from "./main";
 
@@ -213,7 +215,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			try {
 				const logoData = await this.plugin.app.vault.adapter.readBinary(s.watermarkLogoPath);
 				await paintLogoWatermark(ctx, W, H, s, logoData);
-			} catch (_) {
+			} catch {
 				const logoW = Math.round((W * s.watermarkLogoSize) / 100);
 				const logoH = Math.round(logoW * 0.4);
 				const padding = Math.round(W * 0.015);
@@ -245,7 +247,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 	};
 
 	private toggle(settings: Setting[], show: boolean): void {
-		settings.forEach((s) => (s.settingEl.style.display = show ? "" : "none"));
+		settings.forEach((s) => s.settingEl.toggleClass("is-hidden", !show));
 	}
 
 	private makeSection(
@@ -272,46 +274,83 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.addClass("r2-settings");
 
-		containerEl.createEl("h2", { text: "Watermark S3 Uploader" });
+		new Setting(containerEl).setName("Uploader").setHeading();
 
-		// ── Connection (collapsed) ────────────────────────────────────────────
-		const connEl = this.makeSection(containerEl, "Connection Settings", false, "key");
+		this.addConnectionSection(containerEl);
+		this.addUploadSection(containerEl);
+		this.addImageProcessingSection(containerEl);
+		this.addWatermarkSection(containerEl);
+		this.addDebugSection(containerEl);
+	}
+
+	private addConnectionSection(containerEl: HTMLElement): void {
+		const connEl = this.makeSection(containerEl, "Connection settings", false, "key");
 
 		new Setting(connEl)
-			.setName("Access Key ID")
+			.setName("Test connection")
+			.setDesc("Verify S3 bucket access using current credentials.")
+			.addButton((btn) => btn
+				.setButtonText("Test")
+				.setCta()
+				.onClick(async () => {
+					btn.setButtonText("Testing...").setDisabled(true);
+					try {
+						const client = this.plugin.s3;
+						if (!client) throw new Error("S3 client not initialized");
+						await client.send(new HeadBucketCommand({ Bucket: this.plugin.settings.bucket }));
+						new Notice("Connection successful!");
+						btn.setButtonText("Success").buttonEl.addClass("r2-btn-success");
+						activeWindow.setTimeout(() => { 
+							btn.setButtonText("Test").setDisabled(false); 
+							btn.buttonEl.removeClass("r2-btn-success"); 
+						}, 3000);
+					} catch (err: unknown) {
+						console.error(err);
+						const message = err instanceof Error ? err.message : String(err);
+						new Notice("Connection failed: " + message);
+						btn.setButtonText("Failed").buttonEl.addClass("r2-btn-error");
+						activeWindow.setTimeout(() => { 
+							btn.setButtonText("Test").setDisabled(false); 
+							btn.buttonEl.removeClass("r2-btn-error"); 
+						}, 3000);
+					}
+				}));
+
+		new Setting(connEl)
+			.setName("Access key ID")
 			.addText((text) => {
 				wrapTextWithPasswordHide(text);
-				text.setPlaceholder("access key")
+				text.setPlaceholder("Access key")
 					.setValue(this.plugin.settings.accessKey)
 					.onChange(async (v) => { this.plugin.settings.accessKey = v.trim(); this.plugin.createS3Client(); await this.plugin.saveSettings(); });
 			});
 
 		new Setting(connEl)
-			.setName("Secret Key")
+			.setName("Secret key")
 			.addText((text) => {
 				wrapTextWithPasswordHide(text);
-				text.setPlaceholder("secret key")
+				text.setPlaceholder("Secret key")
 					.setValue(this.plugin.settings.secretKey)
 					.onChange(async (v) => { this.plugin.settings.secretKey = v.trim(); this.plugin.createS3Client(); await this.plugin.saveSettings(); });
 			});
 
 		new Setting(connEl)
 			.setName("Region")
-			.setDesc('"auto" for Cloudflare R2')
+			.setDesc('"auto" for cloudflare r2')
 			.addText((text) =>
-				text.setPlaceholder("auto")
+				text.setPlaceholder("Auto")
 					.setValue(this.plugin.settings.region)
 					.onChange(async (v) => { this.plugin.settings.region = v.trim(); this.plugin.createS3Client(); await this.plugin.saveSettings(); }));
 
 		new Setting(connEl)
-			.setName("S3 Bucket")
+			.setName("S3 bucket")
 			.addText((text) =>
-				text.setPlaceholder("bucket name")
+				text.setPlaceholder("Bucket name")
 					.setValue(this.plugin.settings.bucket)
 					.onChange(async (v) => { this.plugin.settings.bucket = v.trim(); this.plugin.createS3Client(); await this.plugin.saveSettings(); }));
 
 		new Setting(connEl)
-			.setName("Bucket Folder")
+			.setName("Bucket folder")
 			.setDesc("Supports ${year}, ${month}, ${day}, ${basename}")
 			.addText((text) =>
 				text.setPlaceholder("blog/${basename}")
@@ -322,15 +361,15 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		const advConn = this.makeSection(connEl, "Advanced", false, "settings-2");
 
 		new Setting(advConn)
-			.setName("Use Custom Endpoint")
-			.setDesc("Enable for Cloudflare R2 or other S3-compatible providers.")
+			.setName("Use custom endpoint")
+			.setDesc("Enable for cloudflare r2 or other S3-compatible providers.")
 			.addToggle((t) => t.setValue(this.plugin.settings.useCustomEndpoint)
 				.onChange(async (v) => { this.plugin.settings.useCustomEndpoint = v; this.plugin.createS3Client(); await this.plugin.saveSettings(); }));
 
 		new Setting(advConn)
-			.setName("Custom Endpoint URL")
+			.setName("Custom endpoint URL")
 			.addText((text) =>
-				text.setPlaceholder("https://xxxx.r2.cloudflarestorage.com/")
+				text.setPlaceholder("HTTPS://xxxx.r2.cloudflarestorage.com/")
 					.setValue(this.plugin.settings.customEndpoint)
 					.onChange(async (v) => {
 						v = v.match(/^https?:\/\//) ? v : "https://" + v;
@@ -340,18 +379,18 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 					}));
 
 		new Setting(advConn)
-			.setName("Force Path-Style URLs")
+			.setName("Force path-style urls")
 			.addToggle((t) => t.setValue(this.plugin.settings.forcePathStyle)
 				.onChange(async (v) => { this.plugin.settings.forcePathStyle = v; this.plugin.createS3Client(); await this.plugin.saveSettings(); }));
 
 		new Setting(advConn)
-			.setName("Use Custom Image URL")
+			.setName("Use custom image URL")
 			.setDesc("Override public URL base (CDN / custom domain).")
 			.addToggle((t) => t.setValue(this.plugin.settings.useCustomImageUrl)
 				.onChange(async (v) => { this.plugin.settings.useCustomImageUrl = v; this.plugin.createS3Client(); await this.plugin.saveSettings(); }));
 
 		new Setting(advConn)
-			.setName("Custom Image URL")
+			.setName("Custom image URL")
 			.addText((text) =>
 				text.setValue(this.plugin.settings.customImageUrl)
 					.onChange(async (v) => {
@@ -362,85 +401,87 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 					}));
 
 		new Setting(advConn)
-			.setName("Bypass Local CORS Check")
+			.setName("Bypass local cors check")
 			.addToggle((t) => t.setValue(this.plugin.settings.bypassCors)
 				.onChange(async (v) => { this.plugin.settings.bypassCors = v; this.plugin.createS3Client(); await this.plugin.saveSettings(); }));
 
 		new Setting(advConn)
-			.setName("Query String Key")
+			.setName("Query string key")
 			.addText((text) =>
-				text.setPlaceholder("e.g. v")
+				text.setPlaceholder("E.g. V")
 					.setValue(this.plugin.settings.queryStringKey)
 					.onChange(async (v) => { this.plugin.settings.queryStringKey = v; await this.plugin.saveSettings(); }));
 
 		new Setting(advConn)
-			.setName("Query String Value")
+			.setName("Query string value")
 			.addText((text) =>
-				text.setPlaceholder("e.g. 1")
+				text.setPlaceholder("E.g. 1")
 					.setValue(this.plugin.settings.queryStringValue)
 					.onChange(async (v) => { this.plugin.settings.queryStringValue = v; await this.plugin.saveSettings(); }));
+	}
 
-		// ── Upload (open) ─────────────────────────────────────────────────────
-		const uploadEl = this.makeSection(containerEl, "Upload Settings", true, "upload");
+	private addUploadSection(containerEl: HTMLElement): void {
+		const uploadEl = this.makeSection(containerEl, "Upload settings", true, "upload");
 
 		new Setting(uploadEl)
-			.setName("Upload on Drag")
+			.setName("Upload on drag")
 			.setDesc("Also upload images dropped into the editor.")
 			.addToggle((t) => t.setValue(this.plugin.settings.uploadOnDrag)
 				.onChange(async (v) => { this.plugin.settings.uploadOnDrag = v; await this.plugin.saveSettings(); }));
 
-		new Setting(uploadEl).setName("Upload Video Files").addToggle((t) =>
+		new Setting(uploadEl).setName("Upload video files").addToggle((t) =>
 			t.setValue(this.plugin.settings.uploadVideo).onChange(async (v) => { this.plugin.settings.uploadVideo = v; await this.plugin.saveSettings(); }));
 
-		new Setting(uploadEl).setName("Upload Audio Files").addToggle((t) =>
+		new Setting(uploadEl).setName("Upload audio files").addToggle((t) =>
 			t.setValue(this.plugin.settings.uploadAudio).onChange(async (v) => { this.plugin.settings.uploadAudio = v; await this.plugin.saveSettings(); }));
 
-		new Setting(uploadEl).setName("Upload PDF Files").addToggle((t) =>
+		new Setting(uploadEl).setName("Upload PDF files").addToggle((t) =>
 			t.setValue(this.plugin.settings.uploadPdf).onChange(async (v) => { this.plugin.settings.uploadPdf = v; await this.plugin.saveSettings(); }));
 
 		new Setting(uploadEl)
-			.setName("Copy to Local Folder Instead")
+			.setName("Copy to local folder instead")
 			.addToggle((t) => t.setValue(this.plugin.settings.localUpload)
 				.onChange(async (v) => { this.plugin.settings.localUpload = v; await this.plugin.saveSettings(); }));
 
 		new Setting(uploadEl)
-			.setName("Local Folder Path")
+			.setName("Local folder path")
 			.addText((text) =>
-				text.setPlaceholder("folder").setValue(this.plugin.settings.localUploadFolder)
+				text.setPlaceholder("Folder").setValue(this.plugin.settings.localUploadFolder)
 					.onChange(async (v) => { this.plugin.settings.localUploadFolder = v.trim(); await this.plugin.saveSettings(); }));
 
 		new Setting(uploadEl)
-			.setName("Disable Auto-Upload on File Create")
+			.setName("Disable auto-upload on file create")
 			.setDesc("Prevent uploads when files are created by sync tools.")
 			.addToggle((t) => t.setValue(this.plugin.settings.disableAutoUploadOnCreate)
 				.onChange(async (v) => { this.plugin.settings.disableAutoUploadOnCreate = v; await this.plugin.saveSettings(); }));
 
 		new Setting(uploadEl)
-			.setName("Ignore Pattern")
-			.setDesc("Glob patterns to skip, comma-separated. E.g. private/*, **/drafts/**")
+			.setName("Ignore pattern")
+			.setDesc("Glob patterns to skip, comma-separated. E.g. Private/*, **/drafts/**")
 			.addText((text) =>
-				text.setPlaceholder("private/*, **/drafts/**")
+				text.setPlaceholder("Private/*, **/drafts/**")
 					.setValue(this.plugin.settings.ignorePattern)
 					.onChange(async (v) => { this.plugin.settings.ignorePattern = v.trim(); await this.plugin.saveSettings(); }));
+	}
 
-		// ── Image Processing (open) ───────────────────────────────────────────
-		const imgEl = this.makeSection(containerEl, "Image Processing", true, "image");
+	private addImageProcessingSection(containerEl: HTMLElement): void {
+		const imgEl = this.makeSection(containerEl, "Image processing", true, "image");
 
 		new Setting(imgEl)
-			.setName("Convert to WebP")
-			.setDesc("Convert images to WebP before uploading. Filename becomes .webp.")
+			.setName("Convert to webp")
+			.setDesc("Convert images to webp before uploading. Filename becomes .webp.")
 			.addToggle((t) => t.setValue(this.plugin.settings.convertToWebP)
 				.onChange(async (v) => { this.plugin.settings.convertToWebP = v; await this.plugin.saveSettings(); }));
 
 		new Setting(imgEl)
-			.setName("WebP Quality")
+			.setName("Webp quality")
 			.setDesc("0.1 (small file) — 1.0 (best quality). Default: 0.85")
 			.addSlider((s) => s.setDynamicTooltip().setLimits(0.1, 1.0, 0.05)
 				.setValue(this.plugin.settings.webpQuality)
 				.onChange(async (v) => { this.plugin.settings.webpQuality = v; await this.plugin.saveSettings(); }));
 
 		new Setting(imgEl)
-			.setName("Enable Compression")
+			.setName("Enable compression")
 			.addToggle((t) => t.setValue(this.plugin.settings.enableImageCompression)
 				.onChange(async (v) => {
 					this.plugin.settings.enableImageCompression = v;
@@ -450,7 +491,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 
 		this.compressionSettings = [
 			new Setting(imgEl)
-				.setName("Max Size (MB)")
+				.setName("Max size (mb)")
 				.addText((text) =>
 					text.setPlaceholder("1").setValue(this.plugin.settings.maxImageCompressionSize.toString())
 						.onChange(async (v) => {
@@ -459,13 +500,13 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 						})),
 
 			new Setting(imgEl)
-				.setName("Compression Quality")
+				.setName("Compression quality")
 				.addSlider((s) => s.setDynamicTooltip().setLimits(0.0, 1.0, 0.05)
 					.setValue(this.plugin.settings.imageCompressionQuality)
 					.onChange(async (v) => { this.plugin.settings.imageCompressionQuality = v; await this.plugin.saveSettings(); })),
 
 			new Setting(imgEl)
-				.setName("Max Width / Height (px)")
+				.setName("Max width / height (px)")
 				.addText((text) =>
 					text.setPlaceholder("4096").setValue(this.plugin.settings.maxImageWidthOrHeight.toString())
 						.onChange(async (v) => {
@@ -474,18 +515,14 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 						})),
 		];
 		this.toggle(this.compressionSettings, this.plugin.settings.enableImageCompression);
+	}
 
-		// ── Watermark (open) ──────────────────────────────────────────────────
+	private addWatermarkSection(containerEl: HTMLElement): void {
 		const wmEl = this.makeSection(containerEl, "Watermark", true, "stamp");
 
 		const previewWrap = wmEl.createDiv({ cls: "r2-preview-wrap" });
 		this.previewCanvas = previewWrap.createEl("canvas", { cls: "r2-preview-canvas" });
-		// width/height are set dynamically in renderPreview() based on previewResolution
-		this.previewCanvas.style.width = "400px";
-		this.previewCanvas.style.height = "225px";
 
-		// eslint-disable-next-line prefer-const
-		let customColorSetting: Setting;
 		const bgSetting = new Setting(previewWrap)
 			.setName("Preview background")
 			.setClass("r2-preview-bg-setting")
@@ -495,25 +532,26 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 					.onChange(async (v: string) => {
 						this.plugin.settings.previewBackground = v as R2UploaderSettings["previewBackground"];
 						await this.plugin.saveSettings();
-						customColorSetting.settingEl.style.display = v === "custom" ? "" : "none";
+						customColorSetting.settingEl.toggleClass("is-hidden", v !== "custom");
 						this.refreshPreview();
 					}));
 		void bgSetting;
-		customColorSetting = new Setting(previewWrap)
-			.setName("Background color")
-			.addColorPicker((cp) =>
+
+		const customColorSetting = new Setting(previewWrap)
+			.setName("Background color");
+
+		if (customColorSetting.addColorPicker) {
+			customColorSetting.addColorPicker((cp) =>
 				cp.setValue(this.plugin.settings.previewBackgroundColor)
 					.onChange(async (v) => {
 						this.plugin.settings.previewBackgroundColor = v;
 						await this.plugin.saveSettings();
 						this.refreshPreview();
 					}));
-		customColorSetting.settingEl.style.display =
-			this.plugin.settings.previewBackground === "custom" ? "" : "none";
+		}
+		customColorSetting.settingEl.toggleClass("is-hidden", this.plugin.settings.previewBackground !== "custom");
 
 		// Preview resolution control
-		// eslint-disable-next-line prefer-const
-		let customResSetting: Setting;
 		const resSetting = new Setting(previewWrap)
 			.setName("Preview resolution")
 			.setDesc("Canvas resolution for the watermark preview. Higher = more accurate proportions.")
@@ -521,30 +559,30 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 				d.addOptions({
 					"720p": "720p (1280×720)",
 					"1080p": "1080p (1920×1080)",
-					"4k": "4K (3840×2160)",
+					"4k": "4k (3840×2160)",
 					"custom": "Custom…",
 				})
 					.setValue(this.plugin.settings.previewResolution)
 					.onChange(async (v: string) => {
 						this.plugin.settings.previewResolution = v as R2UploaderSettings["previewResolution"];
 						await this.plugin.saveSettings();
-						customResSetting.settingEl.style.display = v === "custom" ? "" : "none";
+						customResSetting.settingEl.toggleClass("is-hidden", v !== "custom");
 						this.refreshPreview();
 					}));
 		void resSetting;
-		customResSetting = new Setting(previewWrap)
+
+		const customResSetting = new Setting(previewWrap)
 			.setName("Custom resolution")
-			.setDesc('Width × Height in pixels, e.g. "2560x1440"')
+			.setDesc('Width × height in pixels, e.g. "2560x1440"')
 			.addText((t) =>
-				t.setPlaceholder("1920x1080")
+				t.setPlaceholder("1920X1080")
 					.setValue(this.plugin.settings.previewResolutionCustom)
 					.onChange(async (v) => {
 						this.plugin.settings.previewResolutionCustom = v.trim();
 						await this.plugin.saveSettings();
 						this.refreshPreview();
 					}));
-		customResSetting.settingEl.style.display =
-			this.plugin.settings.previewResolution === "custom" ? "" : "none";
+		customResSetting.settingEl.toggleClass("is-hidden", this.plugin.settings.previewResolution !== "custom");
 
 		const resLabels: Record<string, string> = { "720p": "1280×720", "1080p": "1920×1080", "4k": "3840×2160" };
 		previewWrap.createEl("p", {
@@ -554,10 +592,10 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		this.refreshPreview();
 
 		// ── Text watermark ────────────────────────────────────────────────────
-		wmEl.createEl("h4", { text: "Text Watermark" });
+		new Setting(wmEl).setName("Text watermark").setHeading();
 
 		new Setting(wmEl)
-			.setName("Enable Text Watermark")
+			.setName("Enable text watermark")
 			.addToggle((t) => t.setValue(this.plugin.settings.watermarkEnabled)
 				.onChange(async (v) => {
 					this.plugin.settings.watermarkEnabled = v;
@@ -574,15 +612,15 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 						.onChange(async (v) => { this.plugin.settings.watermarkText = v; await this.save(); })),
 
 			new Setting(wmEl)
-				.setName("Font Family")
-				.setDesc('e.g. "Arial", "Georgia", "monospace"')
+				.setName("Font family")
+				.setDesc('E.g. "arial", "georgia", "monospace"')
 				.addText((text) =>
 					text.setPlaceholder("Arial")
 						.setValue(this.plugin.settings.watermarkFontFamily)
 						.onChange(async (v) => { this.plugin.settings.watermarkFontFamily = v || "Arial"; await this.save(); })),
 
 			new Setting(wmEl)
-				.setName("Font Size (px)")
+				.setName("Font size (px)")
 				.setDesc("0 = auto (2% of image width)")
 				.addSlider((s) => s.setDynamicTooltip().setLimits(0, 120, 2)
 					.setValue(this.plugin.settings.watermarkFontSize)
@@ -601,16 +639,16 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 				.setName("Color")
 				.setDesc('CSS color, e.g. "rgba(255,255,255,0.85)" or "#ffffff"')
 				.addText((text) =>
-					text.setPlaceholder("rgba(255,255,255,0.85)")
+					text.setPlaceholder("Rgba(255,255,255,0.85)")
 						.setValue(this.plugin.settings.watermarkColor)
 						.onChange(async (v) => { this.plugin.settings.watermarkColor = v; await this.save(); })),
 
 			new Setting(wmEl)
 				.setName("Position")
 				.addDropdown((d) =>
-					d.addOption("bottom-right", "Bottom Right")
-						.addOption("bottom-left", "Bottom Left")
-						.addOption("bottom-center", "Bottom Center")
+					d.addOption("bottom-right", "Bottom right")
+						.addOption("bottom-left", "Bottom left")
+						.addOption("bottom-center", "Bottom center")
 						.addOption("center", "Center")
 						.setValue(this.plugin.settings.watermarkPosition)
 						.onChange(async (v) => { this.plugin.settings.watermarkPosition = v as WatermarkPosition; await this.save(); })),
@@ -623,7 +661,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 					.onChange(async (v) => { this.plugin.settings.watermarkOffsetX = v; await this.save(); })),
 
 			new Setting(wmEl)
-				.setName("Offset Y")
+				.setName("Offset y")
 				.setDesc("Vertical nudge (% of image height, negative = up)")
 				.addSlider((s) => s.setDynamicTooltip().setLimits(-30, 30, 1)
 					.setValue(this.plugin.settings.watermarkOffsetY)
@@ -633,10 +671,10 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		this.toggle(this.watermarkTextSettings, this.plugin.settings.watermarkEnabled);
 
 		// ── Logo watermark ────────────────────────────────────────────────────
-		wmEl.createEl("h4", { text: "Logo Watermark" });
+		new Setting(wmEl).setName("Logo watermark").setHeading();
 
 		new Setting(wmEl)
-			.setName("Enable Logo Watermark")
+			.setName("Enable logo watermark")
 			.addToggle((t) => t.setValue(this.plugin.settings.watermarkLogoEnabled)
 				.onChange(async (v) => {
 					this.plugin.settings.watermarkLogoEnabled = v;
@@ -646,7 +684,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 
 		this.watermarkLogoSettings = [
 			new Setting(wmEl)
-				.setName("Logo Path (vault-relative)")
+				.setName("Logo path (vault-relative)")
 				.setDesc('e.g. "_assets/logo-wm.png"')
 				.addText((text) => {
 					text.setPlaceholder("_assets/logo-wm.png")
@@ -656,32 +694,28 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 							this.plugin.settings.watermarkLogoPath = trimmed;
 							await this.save();
 							const setting = text.inputEl.closest(".setting-item");
-							const descEl = setting?.querySelector(".setting-item-description");
+							const descEl = setting?.querySelector(".setting-item-description") as HTMLElement;
 							if (!descEl) return;
 							if (!trimmed) {
 								descEl.textContent = 'e.g. "_assets/logo-wm.png"';
-								descEl.removeAttribute("style");
+								descEl.removeClass("r2-success", "r2-error");
 								return;
 							}
 							const exists = await this.plugin.app.vault.adapter.exists(trimmed);
-							if (exists) {
-								descEl.textContent = "✓ File found";
-								(descEl as HTMLElement).style.color = "var(--color-green)";
-							} else {
-								descEl.textContent = "⚠ File not found in vault";
-								(descEl as HTMLElement).style.color = "var(--color-red)";
-							}
+							descEl.textContent = exists ? "✓ File found" : "⚠ File not found in vault";
+							descEl.toggleClass("r2-success", exists);
+							descEl.toggleClass("r2-error", !exists);
 						});
 				}),
 
 			new Setting(wmEl)
-				.setName("Logo Size (% of image width)")
+				.setName("Logo size (% of image width)")
 				.addSlider((s) => s.setDynamicTooltip().setLimits(1, 50, 1)
 					.setValue(this.plugin.settings.watermarkLogoSize)
 					.onChange(async (v) => { this.plugin.settings.watermarkLogoSize = v; await this.save(); })),
 
 			new Setting(wmEl)
-				.setName("Logo Opacity")
+				.setName("Logo opacity")
 				.addSlider((s) => s.setDynamicTooltip().setLimits(0.0, 1.0, 0.05)
 					.setValue(this.plugin.settings.watermarkLogoOpacity)
 					.onChange(async (v) => { this.plugin.settings.watermarkLogoOpacity = v; await this.save(); })),
@@ -689,9 +723,9 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			new Setting(wmEl)
 				.setName("Position")
 				.addDropdown((d) =>
-					d.addOption("bottom-right", "Bottom Right")
-						.addOption("bottom-left", "Bottom Left")
-						.addOption("bottom-center", "Bottom Center")
+					d.addOption("bottom-right", "Bottom right")
+						.addOption("bottom-left", "Bottom left")
+						.addOption("bottom-center", "Bottom center")
 						.addOption("center", "Center")
 						.setValue(this.plugin.settings.watermarkLogoPosition)
 						.onChange(async (v) => { this.plugin.settings.watermarkLogoPosition = v as WatermarkPosition; await this.save(); })),
@@ -704,7 +738,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 					.onChange(async (v) => { this.plugin.settings.watermarkLogoOffsetX = v; await this.save(); })),
 
 			new Setting(wmEl)
-				.setName("Offset Y")
+				.setName("Offset y")
 				.setDesc("Vertical nudge (% of image height)")
 				.addSlider((s) => s.setDynamicTooltip().setLimits(-30, 30, 1)
 					.setValue(this.plugin.settings.watermarkLogoOffsetY)
@@ -712,12 +746,13 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		];
 
 		this.toggle(this.watermarkLogoSettings, this.plugin.settings.watermarkLogoEnabled);
+	}
 
-		// ── Debug (collapsed) ─────────────────────────────────────────────────
+	private addDebugSection(containerEl: HTMLElement): void {
 		const debugEl = this.makeSection(containerEl, "Debug", false, "bug");
 
 		new Setting(debugEl)
-			.setName("Debug Mode")
+			.setName("Debug mode")
 			.setDesc("Print detailed logs to the developer console (Cmd+Opt+I). Disable when not needed.")
 			.addToggle((t) => t.setValue(this.plugin.settings.debugMode)
 				.onChange(async (v) => { this.plugin.settings.debugMode = v; await this.plugin.saveSettings(); }));

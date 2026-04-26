@@ -15,7 +15,8 @@ export default class R2UploaderPlugin extends Plugin {
 
 	log(...args: unknown[]): void {
 		if (this.settings.debugMode) {
-			console.log("[R2Uploader]", ...args);
+			const logger = (activeWindow as unknown as { console: Console }).console;
+			logger.log("[R2Uploader]", ...args);
 		}
 	}
 
@@ -49,20 +50,24 @@ export default class R2UploaderPlugin extends Plugin {
 			icon: "image-plus",
 			mobileOnly: false,
 			editorCallback: (editor) => {
-				const input = document.createElement("input");
+				const input = activeDocument.createElement("input");
 				input.type = "file";
 				input.oninput = (event) => {
-					if (event.target) this.runPasteHandler(event, editor);
+					if (event.target) void this.runPasteHandler(event, editor);
 				};
 				input.click();
 				input.remove();
 			},
 		});
 
-		this.pasteFunction = (event, editor) => this.runPasteHandler(event, editor);
+		this.pasteFunction = (event, editor) => { void this.runPasteHandler(event, editor); };
 		this.registerEvent(this.app.workspace.on("editor-paste", this.pasteFunction));
 		this.registerEvent(this.app.workspace.on("editor-drop", this.pasteFunction));
 
+		this.registerAutoUploadOnCreate();
+	}
+
+	private registerAutoUploadOnCreate() {
 		this.registerEvent(this.app.vault.on("create", async (file) => {
 			if (this.settings.disableAutoUploadOnCreate) return;
 			if (!(file instanceof TFile)) return;
@@ -74,9 +79,10 @@ export default class R2UploaderPlugin extends Plugin {
 				const fileContent = await this.app.vault.readBinary(file);
 				const newFile = new File([fileContent], file.name, { type: `image/${file.extension}` });
 				await this.runPasteHandler(null, activeView.editor, newFile);
-				await new Promise((resolve) => setTimeout(resolve, 50));
+				await new Promise((resolve) => activeWindow.setTimeout(resolve, 50));
 				const content = activeView.editor.getValue();
-				const obsidianLink = (this.app.vault as any).getConfig("useMarkdownLinks")
+				const useMarkdownLinks = (this.app.vault as unknown as { getConfig(key: string): boolean }).getConfig("useMarkdownLinks");
+				const obsidianLink = useMarkdownLinks
 					? `![](${file.name.split(" ").join("%20")})`
 					: `![[${file.name}]]`;
 				const position = content.indexOf(obsidianLink);
@@ -87,18 +93,18 @@ export default class R2UploaderPlugin extends Plugin {
 				} else {
 					new Notice(`Failed to find: ${obsidianLink}`);
 				}
-				await this.app.vault.delete(file);
+				await this.app.fileManager.trashFile(file);
 			} catch (error) {
-				new Notice(`Error processing file: ${error.message}`);
+				const message = error instanceof Error ? error.message : String(error);
+				new Notice(`Error processing file: ${message}`);
 			}
 		}));
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as R2UploaderSettings;
 	}
 
 	async saveSettings() {
@@ -112,7 +118,7 @@ export default class R2UploaderPlugin extends Plugin {
 	): Promise<void> {
 		const adapter = this.app.vault.adapter;
 		const getFilePath = "getFilePath" in adapter
-			? (path: string) => (adapter as any).getFilePath(path)
+			? (path: string) => (adapter as unknown as { getFilePath(p: string): string }).getFilePath(path)
 			: null;
 		return pasteHandler(
 			ev,

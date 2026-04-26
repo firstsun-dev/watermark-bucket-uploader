@@ -2,7 +2,7 @@ import { Editor, Notice } from "obsidian";
 import { filesize } from "filesize";
 import { R2UploaderSettings } from "./settings";
 import { compressImage, convertToWebP, applyWatermark } from "./imageProcessor";
-import { uploadFile, formatTimestamp, wrapFileDependingOnType } from "./uploader";
+import { uploadFile, formatTimestamp, wrapFileDependingOnType, resolveFolder } from "./uploader";
 import { S3Client } from "@aws-sdk/client-s3";
 
 export async function replaceText(
@@ -23,10 +23,51 @@ export async function replaceText(
 
 	try {
 		editor.transaction({ changes: [{ from, to, text: replacement }] });
-		if (isInTable) setTimeout(() => { try { editor.refresh(); } catch (_) { /* ignore */ } }, 100);
+		if (isInTable) activeWindow.setTimeout(() => { try { editor.refresh(); } catch { /* ignore */ } }, 100);
 	} catch (e) {
 		console.error("[R2Uploader] replaceText error:", e);
 	}
+}
+
+export function detectFileType(file: File, settings: { uploadVideo: boolean; uploadAudio: boolean; uploadPdf: boolean }): string {
+	if (file.type.match(/video.*/) && settings.uploadVideo) return "video";
+	if (file.type.match(/audio.*/) && settings.uploadAudio) return "audio";
+	if (file.type.match(/application\/pdf/) && settings.uploadPdf) return "pdf";
+	if (file.type.match(/image.*/)) return "image";
+	if (file.type.match(/presentation.*/) || file.type.match(/powerpoint.*/)) return "ppt";
+	return "";
+}
+
+async function processFile(
+	file: File,
+	thisType: string,
+	settings: R2UploaderSettings,
+	readBinary: (path: string) => Promise<ArrayBuffer>,
+	log: (...args: unknown[]) => void,
+): Promise<File> {
+	if (thisType !== "image") return file;
+
+	let processedFile = file;
+	if (settings.convertToWebP) {
+		try { processedFile = await convertToWebP(processedFile, settings, log); }
+		catch (e) { console.warn("[R2Uploader] WebP conversion failed:", e); }
+	} else {
+		log("pipeline: WebP skipped");
+	}
+
+	if (settings.enableImageCompression) {
+		processedFile = await compressImage(processedFile, settings, log);
+	} else {
+		log("pipeline: compression skipped");
+	}
+
+	if (settings.watermarkEnabled || settings.watermarkLogoEnabled) {
+		try { processedFile = await applyWatermark(processedFile, settings, readBinary, log); }
+		catch (e) { console.warn("[R2Uploader] Watermark failed:", e); }
+	} else {
+		log(`pipeline: watermark skipped (text=${settings.watermarkEnabled}, logo=${settings.watermarkLogoEnabled})`);
+	}
+	return processedFile;
 }
 
 export async function pasteHandler(
@@ -85,64 +126,32 @@ export async function pasteHandler(
 	await saveSettings();
 
 	const uploads = files.map(async (file, fileIndex) => {
-		let thisType = "";
-		if (file.type.match(/video.*/) && uploadVideo) thisType = "video";
-		else if (file.type.match(/audio.*/) && uploadAudio) thisType = "audio";
-		else if (file.type.match(/application\/pdf/) && uploadPdf) thisType = "pdf";
-		else if (file.type.match(/image.*/)) thisType = "image";
-		else if (file.type.match(/presentation.*/) || file.type.match(/powerpoint.*/)) thisType = "ppt";
+		const thisType = detectFileType(file, { uploadVideo, uploadAudio, uploadPdf });
 		if (!thisType) return;
 
 		try {
 			log(`pipeline: start — "${file.name}" (${filesize(file.size)}, type=${thisType})`);
+			const processedFile = await processFile(file, thisType, settings, readBinary, log);
 
-			if (thisType === "image") {
-				if (settings.convertToWebP) {
-					try { file = await convertToWebP(file, settings, log); }
-					catch (e) { console.warn("[R2Uploader] WebP conversion failed:", e); }
-				} else {
-					log("pipeline: WebP skipped");
-				}
-
-				if (settings.enableImageCompression) {
-					file = await compressImage(file, settings, log);
-				} else {
-					log("pipeline: compression skipped");
-				}
-
-				if (settings.watermarkEnabled || settings.watermarkLogoEnabled) {
-					try { file = await applyWatermark(file, settings, readBinary, log); }
-					catch (e) { console.warn("[R2Uploader] Watermark failed:", e); }
-				} else {
-					log(`pipeline: watermark skipped (text=${settings.watermarkEnabled}, logo=${settings.watermarkLogoEnabled})`);
-				}
-			}
-
-			const buf = await file.arrayBuffer();
+			const buf = await processedFile.arrayBuffer();
 			const seq = startSeq + fileIndex;
 			const seqStr = String(seq).padStart(4, "0");
 			const ts = formatTimestamp(new Date());
-			const ext = file.name.split(".").pop() ?? "bin";
+			const ext = processedFile.name.split(".").pop() ?? "bin";
 			const newFileName = `${seqStr}_${ts}.${ext}`;
 			log(`pipeline: final — ${newFileName} (${filesize(buf.byteLength)})`);
 
-			let folder = localUpload
+			const folder = localUpload
 				? ((fm.uploadFolder as string | undefined) ?? settings.localUploadFolder)
 				: ((fm.uploadFolder as string | undefined) ?? settings.folder);
 
-			const now = new Date();
-			folder = folder
-				.replace("${year}", now.getFullYear().toString())
-				.replace("${month}", String(now.getMonth() + 1).padStart(2, "0"))
-				.replace("${day}", String(now.getDate()).padStart(2, "0"))
-				.replace("${basename}", noteFile.basename.replace(/ /g, "-"));
-
-			const key = folder ? `${folder}/${newFileName}` : newFileName;
-			const renamedFile = new File([buf], newFileName, { type: file.type });
+			const keyFolder = resolveFolder(folder, noteFile.basename, new Date());
+			const key = keyFolder ? `${keyFolder}/${newFileName}` : newFileName;
+			const uploadableFile = new File([buf], newFileName, { type: processedFile.type });
 
 			let url: string;
 			if (!localUpload) {
-				url = await uploadFile(s3, settings, renamedFile, key);
+				url = await uploadFile(s3, settings, uploadableFile, key);
 			} else {
 				await writeBinary(key, new Uint8Array(buf));
 				url = getFilePath ? getFilePath(key) : key;
@@ -152,7 +161,8 @@ export async function pasteHandler(
 			return wrapFileDependingOnType(url, thisType, "");
 		} catch (error) {
 			console.error("[R2Uploader]", error);
-			return `Error uploading file: ${error.message}`;
+			const message = error instanceof Error ? error.message : String(error);
+			return `Error uploading file: ${message}`;
 		}
 	});
 
@@ -165,6 +175,7 @@ export async function pasteHandler(
 		}
 	} catch (error) {
 		console.error("[R2Uploader] upload error:", error);
-		new Notice(`Error: ${error.message}`);
+		const message = error instanceof Error ? error.message : String(error);
+		new Notice(`Error: ${message}`);
 	}
 }
