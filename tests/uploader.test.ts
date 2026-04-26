@@ -33,12 +33,13 @@ describe("wrapFileDependingOnType", () => {
 	it("wraps ppt", () => {
 		const result = wrapFileDependingOnType("https://cdn.example.com/deck.pptx", "ppt", "");
 		expect(result).toContain("officeapps.live.com");
-		expect(result).toContain("https://cdn.example.com/deck.pptx");
+		expect(result).toContain(encodeURIComponent("https://cdn.example.com/deck.pptx"));
 	});
 
 	it("wraps pdf (no local)", () => {
 		const result = wrapFileDependingOnType("https://cdn.example.com/doc.pdf", "pdf", "");
 		expect(result).toContain("docs.google.com/viewer");
+		expect(result).toContain(encodeURIComponent("https://cdn.example.com/doc.pdf"));
 	});
 
 	it("throws for pdf with localBase", () => {
