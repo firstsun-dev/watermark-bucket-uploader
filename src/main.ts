@@ -4,14 +4,17 @@
 import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
 import { S3Client } from "@aws-sdk/client-s3";
 import { minimatch } from "minimatch";
-import { R2UploaderSettings, DEFAULT_SETTINGS, R2UploaderSettingTab, pasteFunction } from "./settings";
+import { R2UploaderSettings, DEFAULT_SETTINGS, R2UploaderSettingTab, PasteFunction } from "./settings";
 import { createS3Client } from "./uploader";
 import { pasteHandler } from "./pasteHandler";
+
+const AUTO_UPLOAD_DELAY = 50;
+const IMAGE_EXT_REGEX = /\.(jpg|jpeg|png|gif|webp)$/i;
 
 export default class R2UploaderPlugin extends Plugin {
 	settings: R2UploaderSettings;
 	s3: S3Client;
-	pasteFunction: pasteFunction;
+	pasteFunction: PasteFunction;
 
 	log(...args: unknown[]): void {
 		if (this.settings.debugMode) {
@@ -27,14 +30,18 @@ export default class R2UploaderPlugin extends Plugin {
 
 	createS3Client(): void {
 		if (!this.settings.region) return;
-		const apiEndpoint = this.settings.useCustomEndpoint
-			? this.settings.customEndpoint
-			: `https://s3.${this.settings.region}.amazonaws.com/`;
-		this.settings.imageUrlPath = this.settings.useCustomImageUrl
-			? this.settings.customImageUrl
-			: this.settings.forcePathStyle
-				? apiEndpoint + this.settings.bucket + "/"
-				: apiEndpoint.replace("://", `://${this.settings.bucket}.`);
+
+		if (this.settings.useCustomImageUrl) {
+			this.settings.imageUrlPath = this.settings.customImageUrl;
+		} else {
+			const baseUrl = this.settings.useCustomEndpoint
+				? this.settings.customEndpoint
+				: `https://s3.${this.settings.region}.amazonaws.com/`;
+			this.settings.imageUrlPath = this.settings.forcePathStyle
+				? `${baseUrl}${this.settings.bucket}/`
+				: baseUrl.replace("://", `://${this.settings.bucket}.`);
+		}
+
 		this.s3 = createS3Client(this.settings);
 	}
 
@@ -74,7 +81,7 @@ export default class R2UploaderPlugin extends Plugin {
 
 	private async handleFileCreate(file: TFile) {
 		if (this.settings.disableAutoUploadOnCreate) return;
-		if (!file.path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return;
+		if (!IMAGE_EXT_REGEX.test(file.path)) return;
 		
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (!activeView || this.shouldIgnoreCurrentFile()) return;
@@ -85,7 +92,7 @@ export default class R2UploaderPlugin extends Plugin {
 			await this.runPasteHandler(null, activeView.editor, newFile);
 			
 			// Wait for the editor to update with the new Obsidian link
-			await new Promise((resolve) => activeWindow.setTimeout(resolve, 50));
+			await new Promise((resolve) => activeWindow.setTimeout(resolve, AUTO_UPLOAD_DELAY));
 			
 			const content = activeView.editor.getValue();
 			const vaultWithConfig = this.app.vault as unknown as { getConfig(key: string): boolean };
