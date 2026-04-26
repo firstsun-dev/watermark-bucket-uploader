@@ -15,8 +15,7 @@ export default class R2UploaderPlugin extends Plugin {
 
 	log(...args: unknown[]): void {
 		if (this.settings.debugMode) {
-			const logger = (activeWindow as unknown as { console: Console }).console;
-			logger.log("[R2Uploader]", ...args);
+			console.debug("[R2Uploader]", ...args);
 		}
 	}
 
@@ -68,37 +67,47 @@ export default class R2UploaderPlugin extends Plugin {
 	}
 
 	private registerAutoUploadOnCreate() {
-		this.registerEvent(this.app.vault.on("create", async (file) => {
-			if (this.settings.disableAutoUploadOnCreate) return;
-			if (!(file instanceof TFile)) return;
-			if (!file.path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return;
-			const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-			if (!activeView) return;
-			if (this.shouldIgnoreCurrentFile()) return;
-			try {
-				const fileContent = await this.app.vault.readBinary(file);
-				const newFile = new File([fileContent], file.name, { type: `image/${file.extension}` });
-				await this.runPasteHandler(null, activeView.editor, newFile);
-				await new Promise((resolve) => activeWindow.setTimeout(resolve, 50));
-				const content = activeView.editor.getValue();
-				const useMarkdownLinks = (this.app.vault as unknown as { getConfig(key: string): boolean }).getConfig("useMarkdownLinks");
-				const obsidianLink = useMarkdownLinks
-					? `![](${file.name.split(" ").join("%20")})`
-					: `![[${file.name}]]`;
-				const position = content.indexOf(obsidianLink);
-				if (position !== -1) {
-					const from = activeView.editor.offsetToPos(position);
-					const to = activeView.editor.offsetToPos(position + obsidianLink.length);
-					activeView.editor.replaceRange("", from, to);
-				} else {
-					new Notice(`Failed to find: ${obsidianLink}`);
-				}
-				await this.app.fileManager.trashFile(file);
-			} catch (error) {
-				const message = error instanceof Error ? error.message : String(error);
-				new Notice(`Error processing file: ${message}`);
-			}
+		this.registerEvent(this.app.vault.on("create", (file) => {
+			if (file instanceof TFile) void this.handleFileCreate(file);
 		}));
+	}
+
+	private async handleFileCreate(file: TFile) {
+		if (this.settings.disableAutoUploadOnCreate) return;
+		if (!file.path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return;
+		
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!activeView || this.shouldIgnoreCurrentFile()) return;
+
+		try {
+			const fileContent = await this.app.vault.readBinary(file);
+			const newFile = new File([fileContent], file.name, { type: `image/${file.extension}` });
+			await this.runPasteHandler(null, activeView.editor, newFile);
+			
+			// Wait for the editor to update with the new Obsidian link
+			await new Promise((resolve) => activeWindow.setTimeout(resolve, 50));
+			
+			const content = activeView.editor.getValue();
+			const vaultWithConfig = this.app.vault as unknown as { getConfig(key: string): boolean };
+			const useMarkdownLinks = vaultWithConfig.getConfig("useMarkdownLinks");
+			
+			const obsidianLink = useMarkdownLinks
+				? `![](${file.name.split(" ").join("%20")})`
+				: `![[${file.name}]]`;
+				
+			const position = content.indexOf(obsidianLink);
+			if (position !== -1) {
+				const from = activeView.editor.offsetToPos(position);
+				const to = activeView.editor.offsetToPos(position + obsidianLink.length);
+				activeView.editor.replaceRange("", from, to);
+			} else {
+				new Notice(`Failed to find: ${obsidianLink}`);
+			}
+			await this.app.fileManager.trashFile(file);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			new Notice(`Error processing file: ${message}`);
+		}
 	}
 
 	onunload() {}
