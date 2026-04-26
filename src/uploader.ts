@@ -64,18 +64,20 @@ export class ObsHttpHandler extends FetchHttpHandler {
 		};
 
 		const timeoutFn = requestTimeout as (ms?: number) => Promise<never>;
-		const raceOfPromises: Promise<unknown>[] = [
-			(async (): Promise<{ response: HttpResponse }> => {
-				const rsp = await requestUrl(param);
-				const headersLower: Record<string, string> = {};
-				for (const key of Object.keys(rsp.headers)) headersLower[key.toLowerCase()] = rsp.headers[key];
-				const stream = new ReadableStream<Uint8Array>({
-					start(controller) { controller.enqueue(new Uint8Array(rsp.arrayBuffer)); controller.close(); },
-				});
-				return { response: new HttpResponse({ headers: headersLower, statusCode: rsp.status, body: stream }) };
-			})(),
-			timeoutFn(this.requestTimeoutInMs),
-		];
+		const mainPromise = (async (): Promise<{ response: HttpResponse }> => {
+			const rsp = await requestUrl(param);
+			const headersLower: Record<string, string> = {};
+			for (const key of Object.keys(rsp.headers)) headersLower[key.toLowerCase()] = rsp.headers[key];
+			const stream = new ReadableStream<Uint8Array>({
+				start(controller) { controller.enqueue(new Uint8Array(rsp.arrayBuffer)); controller.close(); },
+			});
+			return { response: new HttpResponse({ headers: headersLower, statusCode: rsp.status, body: stream }) };
+		})();
+
+		const raceOfPromises: Promise<unknown>[] = [mainPromise];
+		if (this.requestTimeoutInMs !== undefined) {
+			raceOfPromises.push(timeoutFn(this.requestTimeoutInMs));
+		}
 
 		if (abortSignal) {
 			const abortFn = async (): Promise<never> => {
