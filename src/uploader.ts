@@ -63,7 +63,6 @@ export class ObsHttpHandler extends FetchHttpHandler {
 			contentType,
 		};
 
-		const timeoutFn = requestTimeout as (ms?: number) => Promise<never>;
 		const mainPromise = (async (): Promise<{ response: HttpResponse }> => {
 			const rsp = await requestUrl(param);
 			const headersLower: Record<string, string> = {};
@@ -76,13 +75,14 @@ export class ObsHttpHandler extends FetchHttpHandler {
 
 		const raceOfPromises: Promise<unknown>[] = [mainPromise];
 		if (this.requestTimeoutInMs !== undefined) {
-			raceOfPromises.push(timeoutFn(this.requestTimeoutInMs));
+			raceOfPromises.push(requestTimeout(this.requestTimeoutInMs));
 		}
 
 		if (abortSignal) {
+			const signal = abortSignal as AbortSignal;
 			const abortFn = async (): Promise<never> => {
 				await new Promise<void>((resolve) => {
-					abortSignal.onabort = () => resolve();
+					signal.addEventListener("abort", () => resolve(), { once: true });
 				});
 				const err = new Error("Request aborted");
 				err.name = "AbortError";
@@ -151,10 +151,10 @@ export const wrapFileDependingOnType = (location: string, type: string, localBas
 	if (type === "audio") return `<audio src="${srcPrefix}${location}" controls />`;
 	if (type === "pdf") {
 		if (localBase) throw new Error("PDFs cannot be embedded in local mode");
-		return `<iframe frameborder=0 border=0 width=100% height=800\n\tsrc="https://docs.google.com/viewer?embedded=true&url=${location}?raw=true">\n\t</iframe>`;
+		return `<iframe frameborder=0 border=0 width=100% height=800\n\tsrc="https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(location)}?raw=true">\n\t</iframe>`;
 	}
 	if (type === "ppt") {
-		return `<iframe\n\t    src='https://view.officeapps.live.com/op/embed.aspx?src=${location}'\n\t    width='100%' height='600px' frameborder='0'>\n\t  </iframe>`;
+		return `<iframe\n\t    src='https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(location)}'\n\t    width='100%' height='600px' frameborder='0'>\n\t  </iframe>`;
 	}
 	throw new Error("Unknown file type");
 };
