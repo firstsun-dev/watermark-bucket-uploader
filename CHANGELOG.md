@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/firstsun-dev/watermark-s3-uploader/compare/1.0.0...1.0.1) (2026-04-26)
+
+### Bug Fixes
+
+* address SonarCloud issues ([#8](https://github.com/firstsun-dev/watermark-s3-uploader/issues/8)) ([6d78e40](https://github.com/firstsun-dev/watermark-s3-uploader/commit/6d78e40fc6a635f4a1f8c3732e7a21b9ccb8bf68))
+
 ## 1.0.0 (2026-04-26)
 
 ### Bug Fixes
