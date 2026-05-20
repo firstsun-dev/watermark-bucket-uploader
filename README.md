@@ -93,6 +93,14 @@ The plugin includes a powerful **Live Preview** canvas in the settings tab.
 - **Compression**: Set a maximum file size or dimensions to save on storage and bandwidth.
 - **WebP**: Toggle conversion to modern WebP format for optimal web performance.
 
+## Development
+
+1. Install dependencies: `npm install`
+2. Start development mode with hot-reload: `npm run dev`
+3. Build for production: `npm run build`
+4. Run tests: `npm test`
+5. Lint code: `npm run lint`
+
 ## License
 
 MIT
