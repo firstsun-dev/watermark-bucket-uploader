@@ -2,6 +2,7 @@
 // Extended with WebP conversion, watermark with live preview, and collapsible settings UI.
 
 import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
+// Trigger release via source change
 import { S3Client } from "@aws-sdk/client-s3";
 import { minimatch } from "minimatch";
 import { R2UploaderSettings, DEFAULT_SETTINGS, R2UploaderSettingTab, PasteFunction } from "./settings";
