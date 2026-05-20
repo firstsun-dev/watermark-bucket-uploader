@@ -1,3 +1,14 @@
+## [1.1.0](https://github.com/firstsun-dev/watermark-s3-uploader/compare/1.0.0...1.1.0) (2026-05-20)
+
+### Features
+
+* add development section to README ([db9d042](https://github.com/firstsun-dev/watermark-s3-uploader/commit/db9d042a8a685ed06f7f86bb580b94e645c53a60))
+
+### Bug Fixes
+
+* trigger release with source change ([4791ca8](https://github.com/firstsun-dev/watermark-s3-uploader/commit/4791ca84e0eecde65cca2652d181db66ab8cbf43))
+* update plugin id to watermark-image-bucket-uploader ([f5e618b](https://github.com/firstsun-dev/watermark-s3-uploader/commit/f5e618bf0e80e5f53716f1e79d350230aecd661b))
+
 ## [1.0.2](https://github.com/firstsun-dev/watermark-s3-uploader/compare/1.0.1...1.0.2) (2026-05-20)
 
 ### Bug Fixes
