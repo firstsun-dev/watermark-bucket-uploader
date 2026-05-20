@@ -1,5 +1,5 @@
 {
-	"id": "watermark-s3-uploader",
+	"id": "watermark-bucket-uploader",
 	"name": "Watermark S3 Uploader",
 	"minAppVersion": "1.6.6",
 	"description": "Upload images to Cloudflare R2 or any S3-compatible storage. Features: WebP conversion, image compression, text & logo watermark with live preview.",
