@@ -61,7 +61,7 @@
       "@semantic-release/exec",
       {
         "prepareCmd": "node -e \"const fs=require('fs'); const m=JSON.parse(fs.readFileSync('manifest.json')); m.version='${nextRelease.version}'; fs.writeFileSync('manifest.json', JSON.stringify(m,null,'\\t')); const v=JSON.parse(fs.readFileSync('versions.json')); v['${nextRelease.version}']=m.minAppVersion; fs.writeFileSync('versions.json', JSON.stringify(v,null,'\\t'));\"",
-        "publishCmd": "zip -j watermark-s3-uploader-${nextRelease.version}.zip main.js manifest.json styles.css"
+        "publishCmd": "zip -j watermark-image-bucket-uploader-${nextRelease.version}.zip main.js manifest.json styles.css"
       }
     ],
     [
@@ -78,7 +78,7 @@
           { "path": "main.js" },
           { "path": "manifest.json" },
           { "path": "styles.css" },
-          { "path": "watermark-s3-uploader-*.zip", "label": "Plugin Package (Zip)" }
+          { "path": "watermark-image-bucket-uploader-*.zip", "label": "Plugin Package (Zip)" }
         ]
       }
     ]
