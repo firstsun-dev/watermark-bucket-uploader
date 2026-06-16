@@ -85,22 +85,23 @@ details[open] > .r2-section-summary .r2-chevron svg {
     color: var(--text-muted);
 }
 
-.is-hidden {
-    display: none !important;
+.r2-settings .is-hidden,
+.is-hidden.is-hidden {
+    display: none;
 }
 
-.r2-success {
-    color: var(--color-green) !important;
+.r2-success.r2-success {
+    color: var(--color-green);
 }
 
-.r2-error {
-    color: var(--color-red) !important;
+.r2-error.r2-error {
+    color: var(--color-red);
 }
 
-.r2-btn-success {
-    background-color: var(--color-green) !important;
+.r2-btn-success.r2-btn-success {
+    background-color: var(--color-green);
 }
 
-.r2-btn-error {
-    background-color: var(--color-red) !important;
+.r2-btn-error.r2-btn-error {
+    background-color: var(--color-red);
 }
