@@ -1,5 +1,7 @@
 # Watermark Bucket Uploader
 
+[繁體中文](README.zh-TW.md)
+
 An Obsidian plugin that intercepts image paste/drop events, optionally converts to WebP, applies a canvas-based watermark, uploads to Cloudflare R2 (or any S3-compatible storage), and inserts the resulting URL as a markdown image link.
 
 ## Features
