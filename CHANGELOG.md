@@ -1,0 +1,27 @@
+## 1.0.0 (2026-06-16)
+
+### Features
+
+* add development section to README ([db9d042](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/db9d042a8a685ed06f7f86bb580b94e645c53a60))
+
+### Bug Fixes
+
+* address SonarCloud code smells and improve reliability ([6c8fd8b](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/6c8fd8b700a9fee0c6b207b8ecf93e3190759226))
+* address SonarCloud code smells and improve reliability ([#7](https://github.com/firstsun-dev/watermark-bucket-uploader/issues/7)) ([aa5ff7e](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/aa5ff7e9a2b3fd20bb73aacb97da9faa728b8402))
+* address SonarCloud issues ([#8](https://github.com/firstsun-dev/watermark-bucket-uploader/issues/8)) ([6d78e40](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/6d78e40fc6a635f4a1f8c3732e7a21b9ccb8bf68))
+* address SonarCloud issues (XSS, reliability, and cognitive complexity) ([da34982](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/da3498296641ac59fc9b17689fd295abad82aa6c))
+* cast buffer to ArrayBuffer and add Dependabot deps release rules ([b1c9065](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/b1c906592d3bb1f717d4ee612a5c37b647418ac1))
+* remove unnecessary ArrayBuffer type assertion in uploader ([0cc1438](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/0cc1438b50806f63f402199e06982385a5578255))
+* rename plugin id to watermark-bucket-uploader ([ab588eb](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/ab588eb286e996818e6f35282e0925e4afd26be4))
+* trigger release with source change ([4791ca8](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/4791ca84e0eecde65cca2652d181db66ab8cbf43))
+* update plugin id to watermark-image-bucket-uploader ([f5e618b](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/f5e618bf0e80e5f53716f1e79d350230aecd661b))
+
+### Documentation
+
+* add architecture doc with Mermaid diagrams ([8950902](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/89509022ac4fd1f46c7412680cdc7fc03764f917))
+
+### Code Refactoring
+
+* Align CI/CD pipeline and refine settings UI ([#6](https://github.com/firstsun-dev/watermark-bucket-uploader/issues/6)) ([8c01494](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/8c01494262f97edf94a28253352ec565861a274a))
+* fix sonar quality gate issues and improve code maintainability ([730218e](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/730218e121f95b4305f79a33eea9084ddbdcb2c6))
+* split main.ts into focused modules ([84221ab](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/84221ab18a8dd3e57ed4358b0f5bdd23f71439d5))
