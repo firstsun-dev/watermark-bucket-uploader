@@ -2,7 +2,7 @@
 	"id": "watermark-bucket-uploader",
 	"name": "Watermark Bucket Uploader",
 	"minAppVersion": "1.6.6",
-	"description": "Upload images to Cloudflare R2 or any S3-compatible storage. Features: WebP conversion, image compression, text & logo watermark with live preview.",
+	"description": "Upload images to any S3-compatible storage (Cloudflare R2, AWS S3, etc.) with WebP conversion, compression, and text & logo watermark.",
 	"author": "ClaudiaFang",
 	"authorUrl": "https://github.com/firstsun-dev",
 	"isDesktopOnly": false,
