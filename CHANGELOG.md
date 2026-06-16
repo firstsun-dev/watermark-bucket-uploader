@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/firstsun-dev/watermark-bucket-uploader/compare/1.0.0...1.0.1) (2026-06-16)
+
+### Bug Fixes
+
+* update version to 1.0.0, replace builtin-modules, remove CSS !important ([#13](https://github.com/firstsun-dev/watermark-bucket-uploader/issues/13)) ([07dbdd1](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/07dbdd1d0181a977bf2a2e93116d76f13d972d73))
+
 ## 1.0.0 (2026-06-16)
 
 ### Features
