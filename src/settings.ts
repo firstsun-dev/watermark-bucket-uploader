@@ -5,6 +5,7 @@ import {
 	Setting,
 	TextComponent,
 	setIcon,
+	setTooltip,
 } from "obsidian";
 import { HeadBucketCommand } from "@aws-sdk/client-s3";
 import { paintCheckerboard, paintLogoWatermark, paintTextWatermark, resolvePosition } from "./watermark";
@@ -161,6 +162,28 @@ export const wrapTextWithPasswordHide = (text: TextComponent) => {
 	return text;
 };
 
+export function normalizeUrl(value: string): string {
+	const trimmed = value.trim();
+	const withScheme = /^https?:\/\//.test(trimmed) ? trimmed : "https://" + trimmed;
+	return withScheme.replace(/([^/])$/, "$1/");
+}
+
+export function isValidUrl(value: string): boolean {
+	try {
+		new URL(value);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export function isValidResolution(value: string): boolean {
+	const parts = value.toLowerCase().split(/[x×,\s]+/).filter(Boolean);
+	if (parts.length !== 2) return false;
+	const [w, h] = parts.map((p) => parseInt(p, 10));
+	return Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0;
+}
+
 // ── Settings Tab ──────────────────────────────────────────────────────────────
 
 const REFRESH_TIMEOUT = 3000;
@@ -263,6 +286,36 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 
 	private toggle(settings: Setting[], show: boolean): void {
 		settings.forEach((s) => s.settingEl.toggleClass("is-hidden", !show));
+	}
+
+	/** Adds a "?" icon next to a setting's name that shows explanatory text on hover (desktop) or tap (mobile). */
+	private addInfoTooltip(setting: Setting, text: string): void {
+		const icon = setting.nameEl.createSpan({ cls: "r2-info-icon" });
+		setIcon(icon, "help-circle");
+		setTooltip(icon, text, { placement: "top" });
+		icon.addEventListener("click", (evt) => {
+			evt.stopPropagation();
+			this.showInfoPopover(icon, text);
+		});
+	}
+
+	private showInfoPopover(anchor: HTMLElement, text: string): void {
+		activeDocument.querySelectorAll(".r2-info-popover").forEach((el) => el.remove());
+		const popover = activeDocument.body.createDiv({ cls: "r2-info-popover", text });
+		const rect = anchor.getBoundingClientRect();
+		popover.style.top = `${rect.bottom + 4}px`;
+		popover.style.left = `${rect.left}px`;
+		const close = (evt: MouseEvent) => {
+			if (!popover.contains(evt.target as Node)) {
+				popover.remove();
+				activeDocument.removeEventListener("click", close);
+			}
+		};
+		activeWindow.setTimeout(() => activeDocument.addEventListener("click", close), 0);
+	}
+
+	private setFieldValid(inputEl: HTMLElement, valid: boolean): void {
+		inputEl.toggleClass("r2-input-error", !valid);
 	}
 
 	private makeSection(
@@ -382,46 +435,69 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 
 		const updateS3 = () => this.plugin.createS3Client();
 
-		this.addStringSetting(connEl, "Access key ID", "", "Access key", "accessKey", true, updateS3);
-		this.addStringSetting(connEl, "Secret key", "", "Secret key", "secretKey", true, updateS3);
+		this.addInfoTooltip(
+			this.addStringSetting(connEl, "Access key ID", "", "Access key", "accessKey", true, updateS3),
+			"Access key from your S3-compatible provider (e.g. AWS IAM user, R2 API token).",
+		);
+		this.addInfoTooltip(
+			this.addStringSetting(connEl, "Secret key", "", "Secret key", "secretKey", true, updateS3),
+			"Secret key paired with the access key ID above. Hidden by default.",
+		);
 		this.addStringSetting(connEl, "Region", '"auto" for cloudflare r2', "Auto", "region", false, updateS3);
-		this.addStringSetting(connEl, "S3 bucket", "", "Bucket name", "bucket", false, updateS3);
+		this.addInfoTooltip(
+			this.addStringSetting(connEl, "S3 bucket", "", "Bucket name", "bucket", false, updateS3),
+			"Name of the bucket uploads are sent to. Must match exactly what exists in your provider.",
+		);
 		this.addStringSetting(connEl, "Bucket folder", "Supports ${year}, ${month}, ${day}, ${basename}", "blog/${basename}", "folder");
 
 		// Advanced connection
-		const advConn = this.makeSection(connEl, "Advanced", false, "settings-2");
+		const advConn = this.makeSection(connEl, "Advanced settings", false, "settings-2");
 
 		this.addToggleSetting(advConn, "Use custom endpoint", "Enable for cloudflare r2 or other S3-compatible providers.", "useCustomEndpoint", updateS3);
 
-		new Setting(advConn)
+		const endpointSetting = new Setting(advConn)
 			.setName("Custom endpoint URL")
 			.addText((text) =>
 				text.setPlaceholder("HTTPS://xxxx.r2.cloudflarestorage.com/")
 					.setValue(this.plugin.settings.customEndpoint)
 					.onChange(async (v) => {
-						let normalized = /^https?:\/\//.test(v) ? v : "https://" + v;
-						normalized = normalized.replace(/([^/])$/, "$1/");
-						this.plugin.settings.customEndpoint = normalized.trim();
+						const normalized = normalizeUrl(v);
+						this.plugin.settings.customEndpoint = normalized;
+						this.setFieldValid(text.inputEl, !v.trim() || isValidUrl(normalized));
 						updateS3(); await this.plugin.saveSettings();
 					}));
+		this.addInfoTooltip(endpointSetting, "S3-compatible API endpoint, e.g. https://<account-id>.r2.cloudflarestorage.com/");
 
-		this.addToggleSetting(advConn, "Force path-style urls", "", "forcePathStyle", updateS3);
+		this.addInfoTooltip(
+			this.addToggleSetting(advConn, "Force path-style urls", "", "forcePathStyle", updateS3),
+			"Use https://endpoint/bucket instead of https://bucket.endpoint. Required by some S3-compatible services (e.g. MinIO).",
+		);
 		this.addToggleSetting(advConn, "Use custom image URL", "Override public URL base (CDN / custom domain).", "useCustomImageUrl", updateS3);
 
-		new Setting(advConn)
+		const imageUrlSetting = new Setting(advConn)
 			.setName("Custom image URL")
 			.addText((text) =>
 				text.setValue(this.plugin.settings.customImageUrl)
 					.onChange(async (v) => {
-						let normalized = /^https?:\/\//.test(v) ? v : "https://" + v;
-						normalized = normalized.replace(/([^/])$/, "$1/");
-						this.plugin.settings.customImageUrl = normalized.trim();
+						const normalized = normalizeUrl(v);
+						this.plugin.settings.customImageUrl = normalized;
+						this.setFieldValid(text.inputEl, !v.trim() || isValidUrl(normalized));
 						updateS3(); await this.plugin.saveSettings();
 					}));
+		this.addInfoTooltip(imageUrlSetting, "Public base URL used to build image links, e.g. a CDN or custom domain. Leave blank to use the bucket's default URL.");
 
-		this.addToggleSetting(advConn, "Bypass local cors check", "", "bypassCors", updateS3);
-		this.addStringSetting(advConn, "Query string key", "", "E.g. V", "queryStringKey");
-		this.addStringSetting(advConn, "Query string value", "", "E.g. 1", "queryStringValue");
+		this.addInfoTooltip(
+			this.addToggleSetting(advConn, "Bypass local cors check", "", "bypassCors", updateS3),
+			"Skip the local CORS preflight check. Enable if uploads fail locally due to CORS but your bucket is actually configured correctly.",
+		);
+		this.addInfoTooltip(
+			this.addStringSetting(advConn, "Query string key", "", "E.g. V", "queryStringKey"),
+			"Name of a query parameter appended to every uploaded image URL, e.g. for CDN cache-busting.",
+		);
+		this.addInfoTooltip(
+			this.addStringSetting(advConn, "Query string value", "", "E.g. 1", "queryStringValue"),
+			"Value paired with the query string key above.",
+		);
 	}
 
 	private addUploadSection(containerEl: HTMLElement): void {
@@ -431,8 +507,14 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		this.addToggleSetting(uploadEl, "Upload video files", "", "uploadVideo");
 		this.addToggleSetting(uploadEl, "Upload audio files", "", "uploadAudio");
 		this.addToggleSetting(uploadEl, "Upload PDF files", "", "uploadPdf");
-		this.addToggleSetting(uploadEl, "Copy to local folder instead", "", "localUpload");
-		this.addStringSetting(uploadEl, "Local folder path", "", "Folder", "localUploadFolder");
+		this.addInfoTooltip(
+			this.addToggleSetting(uploadEl, "Copy to local folder instead", "", "localUpload"),
+			"Save images into a vault folder instead of uploading to the S3 bucket.",
+		);
+		this.addInfoTooltip(
+			this.addStringSetting(uploadEl, "Local folder path", "", "Folder", "localUploadFolder"),
+			"Vault-relative folder used when 'Copy to local folder instead' is enabled.",
+		);
 		this.addToggleSetting(uploadEl, "Disable auto-upload on file create", "Prevent uploads when files are created by sync tools.", "disableAutoUploadOnCreate");
 		this.addStringSetting(uploadEl, "Ignore pattern", "Glob patterns to skip, comma-separated. E.g. Private/*, **/drafts/**", "Private/*, **/drafts/**", "ignorePattern");
 	}
@@ -453,31 +535,38 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			this.toggle(this.compressionSettings, v);
 		});
 
-		this.compressionSettings = [
-			new Setting(imgEl)
-				.setName("Max size (mb)")
-				.addText((text) =>
-					text.setPlaceholder("1").setValue(this.plugin.settings.maxImageCompressionSize.toString())
-						.onChange(async (v) => {
-							const n = parseFloat(v);
-							if (!isNaN(n) && n > 0) { this.plugin.settings.maxImageCompressionSize = n; await this.plugin.saveSettings(); }
-						})),
+		const maxSizeSetting = new Setting(imgEl)
+			.setName("Max size (mb)")
+			.addText((text) =>
+				text.setPlaceholder("1").setValue(this.plugin.settings.maxImageCompressionSize.toString())
+					.onChange(async (v) => {
+						const n = parseFloat(v);
+						const valid = !isNaN(n) && n > 0;
+						this.setFieldValid(text.inputEl, valid);
+						if (valid) { this.plugin.settings.maxImageCompressionSize = n; await this.plugin.saveSettings(); }
+					}));
+		this.addInfoTooltip(maxSizeSetting, "Compression keeps reducing quality until the file is under this size.");
 
-			new Setting(imgEl)
-				.setName("Compression quality")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(0.0, 1.0, 0.05)
-					.setValue(this.plugin.settings.imageCompressionQuality)
-					.onChange(async (v) => { this.plugin.settings.imageCompressionQuality = v; await this.plugin.saveSettings(); })),
+		const compressionQualitySetting = new Setting(imgEl)
+			.setName("Compression quality")
+			.addSlider((s) => s.setDynamicTooltip().setLimits(0.0, 1.0, 0.05)
+				.setValue(this.plugin.settings.imageCompressionQuality)
+				.onChange(async (v) => { this.plugin.settings.imageCompressionQuality = v; await this.plugin.saveSettings(); }));
+		this.addInfoTooltip(compressionQualitySetting, "Starting quality used for compression before the max-size limit kicks in.");
 
-			new Setting(imgEl)
-				.setName("Max width / height (px)")
-				.addText((text) =>
-					text.setPlaceholder("4096").setValue(this.plugin.settings.maxImageWidthOrHeight.toString())
-						.onChange(async (v) => {
-							const n = parseInt(v);
-							if (!isNaN(n) && n > 0) { this.plugin.settings.maxImageWidthOrHeight = n; await this.plugin.saveSettings(); }
-						})),
-		];
+		const maxDimensionSetting = new Setting(imgEl)
+			.setName("Max width / height (px)")
+			.addText((text) =>
+				text.setPlaceholder("4096").setValue(this.plugin.settings.maxImageWidthOrHeight.toString())
+					.onChange(async (v) => {
+						const n = parseInt(v);
+						const valid = !isNaN(n) && n > 0;
+						this.setFieldValid(text.inputEl, valid);
+						if (valid) { this.plugin.settings.maxImageWidthOrHeight = n; await this.plugin.saveSettings(); }
+					}));
+		this.addInfoTooltip(maxDimensionSetting, "Images wider or taller than this (in pixels) are scaled down proportionally.");
+
+		this.compressionSettings = [maxSizeSetting, compressionQualitySetting, maxDimensionSetting];
 		this.toggle(this.compressionSettings, this.plugin.settings.enableImageCompression);
 	}
 
@@ -540,7 +629,9 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 				t.setPlaceholder("1920X1080")
 					.setValue(this.plugin.settings.previewResolutionCustom)
 					.onChange(async (v) => {
-						this.plugin.settings.previewResolutionCustom = v.trim();
+						const trimmed = v.trim();
+						this.plugin.settings.previewResolutionCustom = trimmed;
+						this.setFieldValid(t.inputEl, isValidResolution(trimmed));
 						await this.plugin.saveSettings();
 						this.refreshPreview();
 					}));
