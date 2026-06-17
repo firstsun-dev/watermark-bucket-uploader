@@ -108,6 +108,9 @@ async function handleFileUpload(
 
 		let url: string;
 		if (!localUpload) {
+			if (!s3) {
+				throw new Error("S3 client not configured — check Region, Access key, Secret key and Bucket in plugin settings.");
+			}
 			url = await uploadFile(s3, settings, uploadableFile, key);
 		} else {
 			await writeBinary(key, new Uint8Array(buf));
