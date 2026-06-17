@@ -1,22 +1,25 @@
 /* Watermark Bucket Uploader — Settings UI styles */
 
 .r2-settings details {
-    margin-bottom: 12px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    overflow: hidden;
+    margin: 4px 0 20px;
+}
+
+.r2-settings details:last-child {
+    margin-bottom: 4px;
 }
 
 .r2-section-summary {
-    padding: 8px 12px;
+    padding: 6px 0;
+    margin-bottom: 4px;
     font-weight: 600;
+    font-size: 1.05em;
     cursor: pointer;
-    background: var(--background-secondary);
     user-select: none;
     list-style: none;
     display: flex;
     align-items: center;
     gap: 7px;
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .r2-section-summary::-webkit-details-marker {
