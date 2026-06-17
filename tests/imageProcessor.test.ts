@@ -30,7 +30,7 @@ const base: R2UploaderSettings = {
 	watermarkLogoOffsetX: 0, watermarkLogoOffsetY: 0,
 	previewBackground: "black", previewBackgroundColor: "",
 	previewResolution: "720p", previewResolutionCustom: "",
-	debugMode: false, uploadSeq: 0,
+	debugMode: false, uploadSeq: 0, sectionState: {},
 };
 
 describe("compressImage", () => {

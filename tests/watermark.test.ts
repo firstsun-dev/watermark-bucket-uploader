@@ -23,7 +23,7 @@ const base: R2UploaderSettings = {
 	previewBackground: "checker", previewBackgroundColor: "#888888",
 	previewResolution: "1080p", previewResolutionCustom: "1920x1080",
 	debugMode: false,
-	uploadSeq: 0,
+	uploadSeq: 0, sectionState: {},
 };
 
 describe("buildFont", () => {

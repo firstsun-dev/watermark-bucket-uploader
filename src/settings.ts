@@ -84,6 +84,8 @@ export interface R2UploaderSettings {
 	debugMode: boolean;
 	// Upload sequence counter
 	uploadSeq: number;
+	// Persisted open/closed state of collapsible settings sections, keyed by label
+	sectionState: Record<string, boolean>;
 }
 
 export const DEFAULT_SETTINGS: R2UploaderSettings = {
@@ -139,6 +141,7 @@ export const DEFAULT_SETTINGS: R2UploaderSettings = {
 	previewResolutionCustom: "1920x1080",
 	debugMode: false,
 	uploadSeq: 0,
+	sectionState: {},
 };
 
 export const wrapTextWithPasswordHide = (text: TextComponent) => {
@@ -265,8 +268,13 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		open = false,
 		icon?: string,
 	): HTMLElement {
+		const isOpen = this.plugin.settings.sectionState[label] ?? open;
 		const details = parent.createEl("details", { cls: "r2-section" });
-		if (open) details.setAttribute("open", "");
+		if (isOpen) details.setAttribute("open", "");
+		details.addEventListener("toggle", () => {
+			this.plugin.settings.sectionState[label] = details.open;
+			void this.plugin.saveSettings();
+		});
 		const summary = details.createEl("summary", { cls: "r2-section-summary" });
 		if (icon) {
 			const iconEl = summary.createSpan({ cls: "r2-section-icon" });
@@ -281,7 +289,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		name: string,
 		desc: string,
 		placeholder: string,
-		key: keyof R2UploaderSettings,
+		key: Exclude<keyof R2UploaderSettings, "sectionState">,
 		password = false,
 		onChanged?: () => void,
 	): Setting {
