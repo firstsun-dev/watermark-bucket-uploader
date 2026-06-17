@@ -162,6 +162,28 @@ export const wrapTextWithPasswordHide = (text: TextComponent) => {
 	return text;
 };
 
+export function normalizeUrl(value: string): string {
+	const trimmed = value.trim();
+	const withScheme = /^https?:\/\//.test(trimmed) ? trimmed : "https://" + trimmed;
+	return withScheme.replace(/([^/])$/, "$1/");
+}
+
+export function isValidUrl(value: string): boolean {
+	try {
+		new URL(value);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export function isValidResolution(value: string): boolean {
+	const parts = value.toLowerCase().split(/[x×,\s]+/).filter(Boolean);
+	if (parts.length !== 2) return false;
+	const [w, h] = parts.map((p) => parseInt(p, 10));
+	return Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0;
+}
+
 // ── Settings Tab ──────────────────────────────────────────────────────────────
 
 const REFRESH_TIMEOUT = 3000;
@@ -439,9 +461,9 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 				text.setPlaceholder("HTTPS://xxxx.r2.cloudflarestorage.com/")
 					.setValue(this.plugin.settings.customEndpoint)
 					.onChange(async (v) => {
-						const normalized = this.normalizeUrl(v);
+						const normalized = normalizeUrl(v);
 						this.plugin.settings.customEndpoint = normalized;
-						this.setFieldValid(text.inputEl, !v.trim() || this.isValidUrl(normalized));
+						this.setFieldValid(text.inputEl, !v.trim() || isValidUrl(normalized));
 						updateS3(); await this.plugin.saveSettings();
 					}));
 		this.addInfoTooltip(endpointSetting, "S3-compatible API endpoint, e.g. https://<account-id>.r2.cloudflarestorage.com/");
@@ -457,9 +479,9 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text.setValue(this.plugin.settings.customImageUrl)
 					.onChange(async (v) => {
-						const normalized = this.normalizeUrl(v);
+						const normalized = normalizeUrl(v);
 						this.plugin.settings.customImageUrl = normalized;
-						this.setFieldValid(text.inputEl, !v.trim() || this.isValidUrl(normalized));
+						this.setFieldValid(text.inputEl, !v.trim() || isValidUrl(normalized));
 						updateS3(); await this.plugin.saveSettings();
 					}));
 		this.addInfoTooltip(imageUrlSetting, "Public base URL used to build image links, e.g. a CDN or custom domain. Leave blank to use the bucket's default URL.");
@@ -476,27 +498,6 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			this.addStringSetting(advConn, "Query string value", "", "E.g. 1", "queryStringValue"),
 			"Value paired with the query string key above.",
 		);
-	}
-
-	private normalizeUrl(value: string): string {
-		const withScheme = /^https?:\/\//.test(value) ? value : "https://" + value;
-		return withScheme.replace(/([^/])$/, "$1/").trim();
-	}
-
-	private isValidUrl(value: string): boolean {
-		try {
-			new URL(value);
-			return true;
-		} catch {
-			return false;
-		}
-	}
-
-	private isValidResolution(value: string): boolean {
-		const parts = value.toLowerCase().split(/[x×,\s]+/).filter(Boolean);
-		if (parts.length !== 2) return false;
-		const [w, h] = parts.map((p) => parseInt(p, 10));
-		return Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0;
 	}
 
 	private addUploadSection(containerEl: HTMLElement): void {
@@ -630,7 +631,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 					.onChange(async (v) => {
 						const trimmed = v.trim();
 						this.plugin.settings.previewResolutionCustom = trimmed;
-						this.setFieldValid(t.inputEl, this.isValidResolution(trimmed));
+						this.setFieldValid(t.inputEl, isValidResolution(trimmed));
 						await this.plugin.saveSettings();
 						this.refreshPreview();
 					}));
