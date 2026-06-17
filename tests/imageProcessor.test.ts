@@ -20,7 +20,7 @@ const base: R2UploaderSettings = {
 	maxImageCompressionSize: 1, imageCompressionQuality: 0.7, maxImageWidthOrHeight: 4096,
 	ignorePattern: "", disableAutoUploadOnCreate: false,
 	convertToWebP: true, webpQuality: 0.85,
-	watermarkEnabled: false, watermarkText: "",
+	watermarkTextEnabled: false, watermarkText: "",
 	watermarkFont: "", watermarkFontFamily: "", watermarkFontSize: 0,
 	watermarkBold: false, watermarkItalic: false,
 	watermarkColor: "", watermarkPosition: "center",

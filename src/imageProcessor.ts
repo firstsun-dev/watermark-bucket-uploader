@@ -91,11 +91,13 @@ export async function applyWatermark(
 			await paintLogoWatermark(ctx, width, height, settings, logoData);
 			log(`applyWatermark: logo applied`);
 		} catch (e) {
+			const message = e instanceof Error ? e.message : String(e);
 			console.warn("[R2Uploader] Logo watermark failed:", e);
+			new Notice(`Logo watermark failed: ${message}`);
 		}
 	}
 
-	if (settings.watermarkEnabled && settings.watermarkText) {
+	if (settings.watermarkTextEnabled && settings.watermarkText) {
 		log(`applyWatermark: text "${settings.watermarkText}"`);
 		paintTextWatermark(ctx, width, height, settings);
 		log(`applyWatermark: text applied`);

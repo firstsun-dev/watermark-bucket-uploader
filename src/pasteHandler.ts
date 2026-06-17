@@ -66,11 +66,11 @@ async function processFile(
 		log("pipeline: compression skipped");
 	}
 
-	if (settings.watermarkEnabled || settings.watermarkLogoEnabled) {
+	if (settings.watermarkTextEnabled || settings.watermarkLogoEnabled) {
 		try { processedFile = await applyWatermark(processedFile, settings, readBinary, log); }
 		catch (e) { console.warn("[R2Uploader] Watermark failed:", e); }
 	} else {
-		log(`pipeline: watermark skipped (text=${settings.watermarkEnabled}, logo=${settings.watermarkLogoEnabled})`);
+		log(`pipeline: watermark skipped (text=${settings.watermarkTextEnabled}, logo=${settings.watermarkLogoEnabled})`);
 	}
 	return processedFile;
 }

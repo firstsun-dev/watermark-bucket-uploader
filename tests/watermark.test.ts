@@ -12,7 +12,7 @@ const base: R2UploaderSettings = {
 	maxImageCompressionSize: 1, imageCompressionQuality: 0.7, maxImageWidthOrHeight: 4096,
 	ignorePattern: "", disableAutoUploadOnCreate: false,
 	convertToWebP: true, webpQuality: 0.85,
-	watermarkEnabled: true, watermarkText: "© test",
+	watermarkTextEnabled: true, watermarkText: "© test",
 	watermarkFont: "16px Arial", watermarkFontFamily: "Arial", watermarkFontSize: 0,
 	watermarkBold: false, watermarkItalic: false,
 	watermarkColor: "rgba(255,255,255,0.85)", watermarkPosition: "bottom-right",

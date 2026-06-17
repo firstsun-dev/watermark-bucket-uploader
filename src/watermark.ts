@@ -48,7 +48,7 @@ export function paintTextWatermark(
 	h: number,
 	s: R2UploaderSettings,
 ): void {
-	if (!s.watermarkEnabled || !s.watermarkText) return;
+	if (!s.watermarkTextEnabled || !s.watermarkText) return;
 	const { font, size: textH } = buildFont(s, w);
 	ctx.save();
 	ctx.font = font;
@@ -75,6 +75,7 @@ export async function paintLogoWatermark(
 	s: R2UploaderSettings,
 	logoData: ArrayBuffer,
 ): Promise<void> {
+	if (!s.watermarkLogoEnabled || !s.watermarkLogoPath) return;
 	const ext = s.watermarkLogoPath.split(".").pop()?.toLowerCase() ?? "";
 	
 	let mimeType = "image/png";

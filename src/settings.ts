@@ -55,7 +55,7 @@ export interface R2UploaderSettings {
 	convertToWebP: boolean;
 	webpQuality: number;
 	// Watermark — text
-	watermarkEnabled: boolean;
+	watermarkTextEnabled: boolean;
 	watermarkText: string;
 	watermarkFont: string;
 	watermarkFontFamily: string;
@@ -115,7 +115,7 @@ export const DEFAULT_SETTINGS: R2UploaderSettings = {
 	disableAutoUploadOnCreate: false,
 	convertToWebP: true,
 	webpQuality: 0.85,
-	watermarkEnabled: false,
+	watermarkTextEnabled: false,
 	watermarkText: "© firstsun.org",
 	watermarkFont: "16px Arial",
 	watermarkFontFamily: "Arial",
@@ -547,7 +547,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 	private addTextWatermarkSubSection(wmEl: HTMLElement): void {
 		new Setting(wmEl).setName("Text watermark").setHeading();
 
-		this.addToggleSetting(wmEl, "Enable text watermark", "", "watermarkEnabled", (v) => {
+		this.addToggleSetting(wmEl, "Enable text watermark", "", "watermarkTextEnabled", (v) => {
 			this.toggle(this.watermarkTextSettings, v);
 			this.refreshPreview();
 		});
@@ -617,7 +617,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 					.onChange(async (v) => { this.plugin.settings.watermarkOffsetY = v; await this.save(); })),
 		];
 
-		this.toggle(this.watermarkTextSettings, this.plugin.settings.watermarkEnabled);
+		this.toggle(this.watermarkTextSettings, this.plugin.settings.watermarkTextEnabled);
 	}
 
 	private addLogoWatermarkSubSection(wmEl: HTMLElement): void {
