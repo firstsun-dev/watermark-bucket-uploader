@@ -8,6 +8,7 @@ import { minimatch } from "minimatch";
 import { R2UploaderSettings, DEFAULT_SETTINGS, R2UploaderSettingTab, PasteFunction } from "./settings";
 import { createS3Client } from "./uploader";
 import { pasteHandler } from "./pasteHandler";
+import { WelcomeModal, WhatsNewModal, getChangesSince } from "./onboarding";
 
 const AUTO_UPLOAD_DELAY = 50;
 const IMAGE_EXT_REGEX = /\.(jpg|jpeg|png|gif|webp)$/i;
@@ -72,6 +73,35 @@ export default class R2UploaderPlugin extends Plugin {
 		this.registerEvent(this.app.workspace.on("editor-drop", this.pasteFunction));
 
 		this.registerAutoUploadOnCreate();
+		this.checkOnboarding();
+	}
+
+	private openSettingsTab(): void {
+		const setting = (this.app as unknown as { setting: { open(): void; openTabById(id: string): void } }).setting;
+		setting.open();
+		setting.openTabById(this.manifest.id);
+	}
+
+	private checkOnboarding(): void {
+		const currentVersion = this.manifest.version;
+		const lastSeen = this.settings.lastSeenVersion;
+
+		if (lastSeen === currentVersion) return;
+
+		if (!lastSeen) {
+			const alreadyConfigured = !!(this.settings.bucket || this.settings.accessKey || this.settings.region);
+			if (!alreadyConfigured) {
+				new WelcomeModal(this.app, () => this.openSettingsTab()).open();
+			}
+		} else {
+			const changes = getChangesSince(lastSeen, currentVersion);
+			if (changes.length > 0) {
+				new WhatsNewModal(this.app, currentVersion, changes).open();
+			}
+		}
+
+		this.settings.lastSeenVersion = currentVersion;
+		void this.saveSettings();
 	}
 
 	private registerAutoUploadOnCreate() {

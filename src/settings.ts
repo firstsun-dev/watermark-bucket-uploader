@@ -86,6 +86,8 @@ export interface R2UploaderSettings {
 	uploadSeq: number;
 	// Persisted open/closed state of collapsible settings sections, keyed by label
 	sectionState: Record<string, boolean>;
+	// Plugin version the user last saw an onboarding/changelog modal for
+	lastSeenVersion: string;
 }
 
 export const DEFAULT_SETTINGS: R2UploaderSettings = {
@@ -142,6 +144,7 @@ export const DEFAULT_SETTINGS: R2UploaderSettings = {
 	debugMode: false,
 	uploadSeq: 0,
 	sectionState: {},
+	lastSeenVersion: "",
 };
 
 export const wrapTextWithPasswordHide = (text: TextComponent) => {

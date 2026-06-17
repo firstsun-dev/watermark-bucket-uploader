@@ -108,3 +108,9 @@ details[open] > .r2-section-summary .r2-chevron svg {
 .r2-btn-error.r2-btn-error {
     background-color: var(--color-red);
 }
+
+.r2-onboarding-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
