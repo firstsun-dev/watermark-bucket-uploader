@@ -439,9 +439,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 				text.setPlaceholder("HTTPS://xxxx.r2.cloudflarestorage.com/")
 					.setValue(this.plugin.settings.customEndpoint)
 					.onChange(async (v) => {
-						let normalized = /^https?:\/\//.test(v) ? v : "https://" + v;
-						normalized = normalized.replace(/([^/])$/, "$1/");
-						normalized = normalized.trim();
+						const normalized = this.normalizeUrl(v);
 						this.plugin.settings.customEndpoint = normalized;
 						this.setFieldValid(text.inputEl, !v.trim() || this.isValidUrl(normalized));
 						updateS3(); await this.plugin.saveSettings();
@@ -459,9 +457,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text.setValue(this.plugin.settings.customImageUrl)
 					.onChange(async (v) => {
-						let normalized = /^https?:\/\//.test(v) ? v : "https://" + v;
-						normalized = normalized.replace(/([^/])$/, "$1/");
-						normalized = normalized.trim();
+						const normalized = this.normalizeUrl(v);
 						this.plugin.settings.customImageUrl = normalized;
 						this.setFieldValid(text.inputEl, !v.trim() || this.isValidUrl(normalized));
 						updateS3(); await this.plugin.saveSettings();
@@ -480,6 +476,11 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			this.addStringSetting(advConn, "Query string value", "", "E.g. 1", "queryStringValue"),
 			"Value paired with the query string key above.",
 		);
+	}
+
+	private normalizeUrl(value: string): string {
+		const withScheme = /^https?:\/\//.test(value) ? value : "https://" + value;
+		return withScheme.replace(/([^/])$/, "$1/").trim();
 	}
 
 	private isValidUrl(value: string): boolean {
