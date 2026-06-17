@@ -30,20 +30,20 @@ export default class R2UploaderPlugin extends Plugin {
 	}
 
 	createS3Client(): void {
-		if (!this.settings.region) return;
+		const region = this.settings.region.trim() || "auto";
 
 		if (this.settings.useCustomImageUrl) {
 			this.settings.imageUrlPath = this.settings.customImageUrl;
 		} else {
 			const baseUrl = this.settings.useCustomEndpoint
 				? this.settings.customEndpoint
-				: `https://s3.${this.settings.region}.amazonaws.com/`;
+				: `https://s3.${region}.amazonaws.com/`;
 			this.settings.imageUrlPath = this.settings.forcePathStyle
 				? `${baseUrl}${this.settings.bucket}/`
 				: baseUrl.replace("://", `://${this.settings.bucket}.`);
 		}
 
-		this.s3 = createS3Client(this.settings);
+		this.s3 = createS3Client({ ...this.settings, region });
 	}
 
 	async onload() {
