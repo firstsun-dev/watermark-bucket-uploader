@@ -284,6 +284,8 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			setIcon(iconEl, icon);
 		}
 		summary.createSpan({ text: label });
+		const chevronEl = summary.createSpan({ cls: "r2-chevron" });
+		setIcon(chevronEl, "chevron-right");
 		return details;
 	}
 

@@ -4,7 +4,13 @@ import { App, Modal } from "obsidian";
  * Per-release notes shown by WhatsNewModal, keyed by plugin version.
  * Add an entry here whenever a release ships something worth announcing.
  */
-export const CHANGELOG: Record<string, string[]> = {};
+export const CHANGELOG: Record<string, string[]> = {
+	"1.0.1": [
+		"Independent text and logo watermark toggles, fixed so both apply correctly on upload",
+		"Blank region now defaults to auto instead of breaking uploads",
+		"Settings sections remember whether you left them expanded or collapsed",
+	],
+};
 
 function parseVersion(v: string): number[] {
 	return v.split(".").map((n) => parseInt(n, 10) || 0);

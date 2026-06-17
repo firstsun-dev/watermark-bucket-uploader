@@ -90,18 +90,25 @@ export default class R2UploaderPlugin extends Plugin {
 
 		if (!lastSeen) {
 			const alreadyConfigured = !!(this.settings.bucket || this.settings.accessKey || this.settings.region);
-			if (!alreadyConfigured) {
-				new WelcomeModal(this.app, () => this.openSettingsTab()).open();
+			if (alreadyConfigured) {
+				// Existing user upgrading from a version that predates this feature.
+				// Treat all prior releases as unseen so future changelog entries still surface.
+				this.settings.lastSeenVersion = "0.0.0";
+				void this.saveSettings();
+				return;
 			}
-		} else {
-			const changes = getChangesSince(lastSeen, currentVersion);
-			if (changes.length > 0) {
-				new WhatsNewModal(this.app, currentVersion, changes).open();
-			}
+			new WelcomeModal(this.app, () => this.openSettingsTab()).open();
+			this.settings.lastSeenVersion = currentVersion;
+			void this.saveSettings();
+			return;
 		}
 
-		this.settings.lastSeenVersion = currentVersion;
-		void this.saveSettings();
+		const changes = getChangesSince(lastSeen, currentVersion);
+		if (changes.length > 0) {
+			new WhatsNewModal(this.app, currentVersion, changes).open();
+			this.settings.lastSeenVersion = currentVersion;
+			void this.saveSettings();
+		}
 	}
 
 	private registerAutoUploadOnCreate() {

@@ -1,7 +1,10 @@
 /* Watermark Bucket Uploader — Settings UI styles */
 
 .r2-settings details {
-    margin: 4px 0 20px;
+    margin: 4px 0 16px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .r2-settings details:last-child {
@@ -9,8 +12,7 @@
 }
 
 .r2-section-summary {
-    padding: 6px 0;
-    margin-bottom: 4px;
+    padding: 8px 12px;
     font-weight: 600;
     font-size: 1.05em;
     cursor: pointer;
@@ -19,6 +21,15 @@
     display: flex;
     align-items: center;
     gap: 7px;
+    background: var(--background-secondary);
+    transition: background-color 0.1s ease-in-out;
+}
+
+.r2-section-summary:hover {
+    background: var(--background-modifier-hover);
+}
+
+details[open] > .r2-section-summary {
     border-bottom: 1px solid var(--background-modifier-border);
 }
 
@@ -26,7 +37,20 @@
     display: none;
 }
 
-/* Chevron arrow replaced by lucide icon transitions */
+.r2-chevron {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.r2-chevron svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.15s ease-in-out;
+}
+
 details[open] > .r2-section-summary .r2-chevron svg {
     transform: rotate(90deg);
 }
@@ -41,11 +65,10 @@ details[open] > .r2-section-summary .r2-chevron svg {
 .r2-section-icon svg {
     width: 15px;
     height: 15px;
-    transition: transform 0.15s ease-in-out;
 }
 
 .r2-section-body {
-    padding: 8px 0;
+    padding: 8px 12px;
 }
 
 /* Sub-section headers inside open sections */
