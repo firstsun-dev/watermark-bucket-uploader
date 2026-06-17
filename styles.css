@@ -71,6 +71,48 @@ details[open] > .r2-section-summary .r2-chevron svg {
     padding: 8px 12px;
 }
 
+/* Nested sections (e.g. "Advanced settings" inside Connection) need extra
+   visual weight so they don't read as just another settings row. */
+.r2-section-body > .r2-section {
+    margin-top: 14px;
+    border-color: var(--interactive-accent);
+}
+
+.r2-section-body > .r2-section > .r2-section-summary {
+    background: var(--background-modifier-hover);
+    color: var(--text-accent);
+}
+
+.r2-info-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.r2-info-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.r2-input-error.r2-input-error {
+    border-color: var(--text-error);
+}
+
+.r2-info-popover {
+    position: fixed;
+    z-index: var(--layer-tooltip);
+    max-width: 280px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--background-tooltip, var(--background-secondary));
+    color: var(--text-normal);
+    font-size: 0.85em;
+    box-shadow: var(--shadow-s);
+}
+
 /* Sub-section headers inside open sections */
 .r2-subsection-heading {
     font-size: 0.8em;
