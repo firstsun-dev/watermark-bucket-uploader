@@ -6,6 +6,8 @@
 
 Stop wrestling with image hosting. This Obsidian plugin intercepts every paste and drop, stamps your watermark, converts to WebP, uploads to your own S3/R2 bucket, and drops a clean `![](url)` right into your note. Zero friction. Your images, your infrastructure, your brand.
 
+<video src="assets/watermark-bucket-uploader-en.webm" width="100%" controls autoplay loop muted playsinline></video>
+
 ![Watermark settings live preview](assets/watermark-settings-preview.png)
 
 ## Why you'll love it
