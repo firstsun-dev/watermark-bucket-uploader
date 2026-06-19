@@ -6,6 +6,8 @@
 
 告別手動上傳的繁瑣。這個 Obsidian 外掛攔截每一次貼上與拖放，自動蓋上你的浮水印、轉換成 WebP、上傳到你自己的 S3/R2，然後把乾淨的 `![](url)` 直接寫進筆記。零摩擦。你的圖片、你的基礎設施、你的品牌識別。
 
+<video src="assets/watermark-bucket-uploader-zh.webm" width="100%" controls autoplay loop muted playsinline></video>
+
 ![浮水印設定即時預覽](assets/watermark-settings-preview.png)
 
 ## 你會愛上它的理由
