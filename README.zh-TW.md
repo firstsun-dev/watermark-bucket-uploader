@@ -25,6 +25,8 @@
 
 ## 設定
 
+如需逐步設定 Cloudflare R2 與浮水印的詳細教學，請參閱 [Cloudflare R2 與浮水印設定指南](docs/how-to-setup-r2-and-watermarks.zh-TW.md)。
+
 前往 **設定 → Watermark Bucket Uploader** 填入你的 bucket 憑證。
 
 ### 儲存設定
