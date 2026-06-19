@@ -25,6 +25,8 @@ Stop wrestling with image hosting. This Obsidian plugin intercepts every paste a
 
 ## Setup
 
+For a step-by-step walkthrough on setting up Cloudflare R2 and configuring watermarks, see the [Cloudflare R2 & Watermarks Setup Guide](docs/how-to-setup-r2-and-watermarks.md).
+
 Go to **Settings → Watermark Bucket Uploader** and fill in your bucket credentials.
 
 ### Storage
