@@ -144,7 +144,37 @@ Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particula
 - Don't assume desktop-only behavior unless `isDesktopOnly` is `true`.
 - Avoid large in-memory structures; be mindful of memory and storage constraints.
 
-## Agent do/don't
+## Agent Workflow
+
+### Startup Workflow — Before writing code
+
+1. Read `feature_list.json` — pick the `status: "in_progress"` item; if none, take the first `status: "todo"` whose dependencies are all `done`.
+2. Read `progress.md` — current open work and next step.
+3. If `archive/$(date +%Y-%m).md` exists, review it for relevant context.
+4. **One feature at a time.** Finish and verify before moving on. Do not start a second feature until the active one is `done`.
+
+### Definition of Done
+
+A feature is done only when:
+- `./init.sh` passes.
+- `feature_list.json` status + evidence updated.
+- `progress.md` records the next step.
+
+### Verification Commands
+
+```bash
+./init.sh
+```
+
+Runs install → build → test → lint → harness hygiene checks. Run this before claiming a feature done.
+
+### End of Session — Before ending a session
+
+Overwrite `session-handoff.md` with the new stopping point. Move finished items from `progress.md` into `archive/YYYY-MM.md`. Note that `session-handoff.md` is gitignored per-checkout scratch — never commit it.
+
+- `feature_list.json` — authoritative feature tracker with status, dependencies, and evidence.
+- `progress.md` — open work only; done features are archived to `archive/YYYY-MM.md`.
+- `session-handoff.md` — per-checkout scratch, gitignored, rewritten each session.
 
 **Do**
 - Add commands with stable IDs (don't rename once released).
