@@ -3,14 +3,16 @@ import { buildFont, resolvePosition, paintCheckerboard } from "../src/watermark"
 import type { R2UploaderSettings } from "../src/settings";
 
 const base: R2UploaderSettings = {
+	storageProvider: "r2",
 	accessKey: "", secretKey: "", region: "", bucket: "", folder: "",
-	imageUrlPath: "", uploadOnDrag: true, localUpload: false, localUploadFolder: "",
+	imageUrlPath: "", uploadOnDrag: true, uploadPastedImages: true, uploadOnCreate: false,
+	localUpload: false, localUploadFolder: "",
 	useCustomEndpoint: false, customEndpoint: "", forcePathStyle: false,
 	useCustomImageUrl: false, customImageUrl: "", uploadVideo: false,
 	uploadAudio: false, uploadPdf: false, bypassCors: false,
 	queryStringValue: "", queryStringKey: "", enableImageCompression: false,
 	maxImageCompressionSize: 1, imageCompressionQuality: 0.7, maxImageWidthOrHeight: 4096,
-	ignorePattern: "", disableAutoUploadOnCreate: false,
+	ignorePattern: "",
 	convertToWebP: true, webpQuality: 0.85,
 	watermarkEnabled: true, watermarkText: "© test",
 	watermarkFont: "16px Arial", watermarkFontFamily: "Arial", watermarkFontSize: 0,
@@ -20,8 +22,11 @@ const base: R2UploaderSettings = {
 	watermarkLogoEnabled: false, watermarkLogoPath: "", watermarkLogoSize: 15,
 	watermarkLogoOpacity: 0.5, watermarkLogoPosition: "bottom-right",
 	watermarkLogoOffsetX: 0, watermarkLogoOffsetY: 0,
+	watermarkPreset: "custom",
+	previewSampleImage: "checker", previewSampleImagePath: "",
 	previewBackground: "checker", previewBackgroundColor: "#888888",
 	previewResolution: "1080p", previewResolutionCustom: "1920x1080",
+	connectionNeedsRetest: false,
 	debugMode: false,
 	uploadSeq: 0,
 };

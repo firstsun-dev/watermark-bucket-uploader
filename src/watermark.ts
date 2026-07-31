@@ -1,4 +1,4 @@
-import { R2UploaderSettings, WatermarkPosition } from "./settings";
+import { R2UploaderSettings, WatermarkPosition } from "./settings/types";
 
 const FONT_SIZE_FACTOR = 0.02;
 const MIN_FONT_SIZE = 14;
@@ -30,15 +30,32 @@ export function resolvePosition(
 ): { x: number; y: number } {
 	const ox = Math.round((imgW * offsetXPct) / 100);
 	const oy = Math.round((imgH * offsetYPct) / 100);
+	const left = Math.round(padding + ox);
+	const centerX = Math.round((imgW - elemW) / 2 + ox);
+	const right = Math.round(imgW - elemW - padding + ox);
+	const top = Math.round(padding + elemH + oy);
+	const centerY = Math.round((imgH + elemH) / 2 + oy);
+	const bottom = Math.round(imgH - padding + oy);
 	switch (position) {
-		case "bottom-right":
-			return { x: Math.round(imgW - elemW - padding + ox), y: Math.round(imgH - padding + oy) };
-		case "bottom-left":
-			return { x: Math.round(padding + ox), y: Math.round(imgH - padding + oy) };
-		case "bottom-center":
-			return { x: Math.round((imgW - elemW) / 2 + ox), y: Math.round(imgH - padding + oy) };
+		case "top-left":
+			return { x: left, y: top };
+		case "top-center":
+			return { x: centerX, y: top };
+		case "top-right":
+			return { x: right, y: top };
+		case "center-left":
+			return { x: left, y: centerY };
 		case "center":
-			return { x: Math.round((imgW - elemW) / 2 + ox), y: Math.round((imgH + elemH) / 2 + oy) };
+			return { x: centerX, y: centerY };
+		case "center-right":
+			return { x: right, y: centerY };
+		case "bottom-left":
+			return { x: left, y: bottom };
+		case "bottom-center":
+			return { x: centerX, y: bottom };
+		case "bottom-right":
+		default:
+			return { x: right, y: bottom };
 	}
 }
 

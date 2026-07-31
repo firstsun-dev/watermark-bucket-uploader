@@ -1,6 +1,6 @@
 import { Editor, Notice } from "obsidian";
 import { filesize } from "filesize";
-import { R2UploaderSettings } from "./settings";
+import { R2UploaderSettings } from "./settings/types";
 import { compressImage, convertToWebP, applyWatermark } from "./imageProcessor";
 import { uploadFile, formatTimestamp, wrapFileDependingOnType, resolveFolder } from "./uploader";
 import { S3Client } from "@aws-sdk/client-s3";
@@ -123,6 +123,25 @@ async function handleFileUpload(
 	}
 }
 
+function collectFiles(
+	ev: ClipboardEvent | DragEvent | Event,
+	settings: R2UploaderSettings,
+	fm: Record<string, unknown>,
+): File[] | null {
+	switch (ev.type) {
+		case "paste":
+			if (!settings.uploadPastedImages) return null;
+			return Array.from((ev as ClipboardEvent).clipboardData?.files || []);
+		case "drop":
+			if (!settings.uploadOnDrag && !fm.uploadOnDrag) return null;
+			return Array.from((ev as DragEvent).dataTransfer?.files || []);
+		case "input":
+			return Array.from((ev.target as HTMLInputElement).files || []);
+		default:
+			return [];
+	}
+}
+
 export async function pasteHandler(
 	ev: ClipboardEvent | DragEvent | Event | null,
 	editor: Editor,
@@ -153,18 +172,9 @@ export async function pasteHandler(
 	if (directFile) {
 		files = [directFile];
 	} else if (ev) {
-		switch (ev.type) {
-			case "paste":
-				files = Array.from((ev as ClipboardEvent).clipboardData?.files || []);
-				break;
-			case "drop":
-				if (!settings.uploadOnDrag && !(fm.uploadOnDrag)) return;
-				files = Array.from((ev as DragEvent).dataTransfer?.files || []);
-				break;
-			case "input":
-				files = Array.from((ev.target as HTMLInputElement).files || []);
-				break;
-		}
+		const collected = collectFiles(ev, settings, fm);
+		if (collected === null) return;
+		files = collected;
 	}
 
 	if (files.length === 0) return;
