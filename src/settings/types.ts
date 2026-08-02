@@ -80,6 +80,9 @@ export interface R2UploaderSettings {
 	watermarkLogoOffsetY: number;
 	// Watermark preset
 	watermarkPreset: WatermarkPresetId;
+	// Persisted UI state (which settings section is open, which watermark tab is active)
+	settingsOpenSection: string;
+	watermarkActiveTab: "text" | "logo";
 	// Preview sample image
 	previewSampleImage: SampleImageId;
 	previewSampleImagePath: string;
@@ -152,6 +155,8 @@ export const DEFAULT_SETTINGS: R2UploaderSettings = {
 	watermarkLogoOffsetX: 0,
 	watermarkLogoOffsetY: 0,
 	watermarkPreset: "custom",
+	settingsOpenSection: "",
+	watermarkActiveTab: "text",
 	previewSampleImage: "checker",
 	previewSampleImagePath: "",
 	previewBackground: "checker",

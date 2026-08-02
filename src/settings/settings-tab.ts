@@ -15,8 +15,15 @@ const PREVIEW_RENDER_DEBOUNCE_MS = 150;
 
 type SectionId = "connection" | "upload" | "processing" | "watermark" | "advanced";
 
+const SECTION_IDS: readonly SectionId[] = ["connection", "upload", "processing", "watermark", "advanced"];
+
+function isSectionId(v: string): v is SectionId {
+	return (SECTION_IDS as readonly string[]).includes(v);
+}
+
 /** Picks the section to open by default based on the user's setup progress. */
 function pickDefaultOpenSection(s: R2UploaderSettings): SectionId {
+	if (isSectionId(s.settingsOpenSection)) return s.settingsOpenSection;
 	if (s.localUpload) return "upload";
 	const storageIncomplete = !s.accessKey || !s.secretKey || !s.bucket;
 	if (storageIncomplete) return "connection";
@@ -121,13 +128,19 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		renderWatermarkSection(containerEl, ctx);
 		renderAdvancedSection(containerEl, ctx);
 
-		// Accordion: opening one section closes the others; open a state-driven default.
+		// Accordion: opening one section closes the others; open a state-driven default
+		// (or the last-opened section remembered across settings re-opens).
 		const sections = Array.from(containerEl.querySelectorAll<HTMLDetailsElement>("[data-r2-section]"));
 		for (const el of sections) {
 			el.addEventListener("toggle", () => {
 				if (!el.open) return;
 				for (const other of sections) {
 					if (other !== el && other.open) other.open = false;
+				}
+				const openedId = el.getAttribute("data-r2-section");
+				if (openedId && openedId !== this.plugin.settings.settingsOpenSection) {
+					this.plugin.settings.settingsOpenSection = openedId;
+					void this.plugin.saveData(this.plugin.settings);
 				}
 			});
 		}

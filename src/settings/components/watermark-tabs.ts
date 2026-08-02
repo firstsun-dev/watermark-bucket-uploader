@@ -76,6 +76,10 @@ export function renderWatermarkTabs(
 			panelDefs[def.id].toggleClass("is-hidden", !active);
 			panelDefs[def.id].hidden = !active;
 		}
+		if (ctx.plugin.settings.watermarkActiveTab !== id) {
+			ctx.plugin.settings.watermarkActiveTab = id;
+			ctx.debouncedSave();
+		}
 	}
 
 	TAB_DEFS.forEach((def, index) => {
@@ -109,5 +113,5 @@ export function renderWatermarkTabs(
 	textPanelBuilder(panelDefs.text);
 	logoPanelBuilder(panelDefs.logo);
 
-	activate("text");
+	activate(ctx.plugin.settings.watermarkActiveTab === "logo" ? "logo" : "text");
 }

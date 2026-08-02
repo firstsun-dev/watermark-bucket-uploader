@@ -31,6 +31,7 @@ const base: R2UploaderSettings = {
 	watermarkLogoOpacity: 0, watermarkLogoPosition: "center",
 	watermarkLogoOffsetX: 0, watermarkLogoOffsetY: 0,
 	watermarkPreset: "custom",
+	settingsOpenSection: "", watermarkActiveTab: "text",
 	previewSampleImage: "checker", previewSampleImagePath: "",
 	previewBackground: "black", previewBackgroundColor: "",
 	previewResolution: "720p", previewResolutionCustom: "",
