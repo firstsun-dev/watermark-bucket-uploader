@@ -31,8 +31,13 @@ export default class R2UploaderPlugin extends Plugin {
 	}
 
 	createS3Client(): void {
-		if (!this.settings.region) return;
+		this.updateImageUrlPath();
+		if (!this.settings.region && !this.settings.useCustomEndpoint) return;
+		this.s3 = createS3Client(this.settings);
+	}
 
+	/** Recomputes `imageUrlPath` (the public URL base for uploaded links) from current settings. */
+	updateImageUrlPath(): void {
 		if (this.settings.useCustomImageUrl) {
 			this.settings.imageUrlPath = this.settings.customImageUrl;
 		} else {
@@ -43,8 +48,6 @@ export default class R2UploaderPlugin extends Plugin {
 				? `${baseUrl}${this.settings.bucket}/`
 				: baseUrl.replace("://", `://${this.settings.bucket}.`);
 		}
-
-		this.s3 = createS3Client(this.settings);
 	}
 
 	async onload() {

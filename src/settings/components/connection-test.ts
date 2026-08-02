@@ -32,8 +32,16 @@ export function renderConnectionTest(container: HTMLElement, ctx: SettingsContex
 
 	const render = () => {
 		wrapper.empty();
+		wrapper.removeClass("r2-success", "r2-error");
 
 		const settings = ctx.plugin.settings;
+
+		// Reflect the last known test result on the wrapper so the colored border/background
+		// from `.r2-connection-test.r2-success/.r2-error` applies; transient states below add it too.
+		if (state === "success") wrapper.addClass("r2-success");
+		else if (state === "failure") wrapper.addClass("r2-error");
+		else if (settings.lastConnectionTestSuccess === true && !settings.connectionNeedsRetest) wrapper.addClass("r2-success");
+		else if (settings.lastConnectionTestSuccess === false) wrapper.addClass("r2-error");
 
 		const controlsEl = wrapper.createDiv({ cls: "r2-connection-test-controls" });
 

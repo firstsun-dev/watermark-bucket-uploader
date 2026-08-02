@@ -68,12 +68,12 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			setPreviewRenderer: (fn) => { this.previewRenderer = fn; },
 			refreshSetupStatus: () => this.statusRenderer?.(),
 			setStatusRenderer: (fn) => { this.statusRenderer = fn; },
-			markConnectionDirty: () => {
-				this.plugin.settings.connectionNeedsRetest = true;
-				void this.plugin.saveSettings();
-				this.statusRenderer?.();
-			},
-			rebuildS3Client: () => this.plugin.createS3Client(),
+		markConnectionDirty: () => {
+			this.plugin.settings.connectionNeedsRetest = true;
+			this.statusRenderer?.();
+		},
+		rebuildS3Client: () => this.plugin.createS3Client(),
+		refreshImageUrlPath: () => this.plugin.updateImageUrlPath(),
 		};
 	}
 

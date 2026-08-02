@@ -28,10 +28,16 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 
 		const preset = PROVIDER_PRESETS[settings.storageProvider];
 
+		// Credential/bucket/region/endpoint changes: persist the value on each keystroke (debounced),
+		// but only mark the connection stale + rebuild the S3 client on blur — avoids rebuilding the
+		// client and flipping the connection status on every character typed.
 		const onCredentialChange = () => {
 			ctx.markConnectionDirty();
-			ctx.rebuildS3Client();
 			ctx.debouncedSave();
+		};
+		const onCredentialBlur = () => {
+			ctx.rebuildS3Client();
+			void ctx.save();
 		};
 
 		// Access key ID
@@ -45,6 +51,7 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 						settings.accessKey = v.trim();
 						onCredentialChange();
 					});
+				text.inputEl.addEventListener("blur", onCredentialBlur);
 			});
 		markRequired(accessKeySetting);
 
@@ -59,6 +66,7 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 						settings.secretKey = v.trim();
 						onCredentialChange();
 					});
+				text.inputEl.addEventListener("blur", onCredentialBlur);
 			});
 		markRequired(secretKeySetting);
 
@@ -72,6 +80,7 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 						settings.bucket = v.trim();
 						onCredentialChange();
 					});
+				text.inputEl.addEventListener("blur", onCredentialBlur);
 			});
 		markRequired(bucketSetting);
 
@@ -86,6 +95,7 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 						settings.region = v.trim();
 						onCredentialChange();
 					});
+				text.inputEl.addEventListener("blur", onCredentialBlur);
 			});
 		if (!settings.useCustomEndpoint) markRequired(regionSetting);
 
@@ -112,13 +122,16 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 					const result = validateHttpsUrl(settings.customEndpoint, { required: settings.useCustomEndpoint });
 					setFieldMessage(endpointSetting, result.valid ? null : result.message ?? null, "error");
 					onCredentialChange();
+					onCredentialBlur();
 				});
 			});
 		endpointSetting.settingEl.toggleClass("is-hidden", !settings.useCustomEndpoint);
 		if (settings.useCustomEndpoint) markRequired(endpointSetting);
 
 		// Public image URL — optional override of the public URL base (CDN / custom domain).
-		// Leaving it blank falls back to the provider/bucket default resolved in createS3Client().
+		// Leaving it blank falls back to the provider/bucket default. Changing it does NOT affect
+		// the bucket connection, so it never marks the connection stale or rebuilds the S3 client;
+		// it only refreshes the derived URL base.
 		const imageUrlSetting = new Setting(body)
 			.setName("Public image URL")
 			.setDesc("Override the public URL base used for uploaded file links. Leave blank to use the default.")
@@ -142,7 +155,8 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 					}
 					const result = validateHttpsUrl(settings.customImageUrl, { required: false });
 					setFieldMessage(imageUrlSetting, result.valid ? null : result.message ?? null, "error");
-					onCredentialChange();
+					ctx.refreshImageUrlPath();
+					void ctx.save();
 				});
 			});
 

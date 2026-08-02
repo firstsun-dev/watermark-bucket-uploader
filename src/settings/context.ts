@@ -20,8 +20,10 @@ export interface SettingsContext {
 	refreshSetupStatus: () => void;
 	/** Registers the function that repaints the setup status card. Call with null on teardown. */
 	setStatusRenderer: (fn: (() => void) | null) => void;
-	/** Marks the connection as needing a retest (call after any credential/endpoint change) and saves. */
+	/** Marks the connection as needing a retest (call after any credential/endpoint change). Does not persist — pair with save/debouncedSave. */
 	markConnectionDirty: () => void;
 	/** Rebuilds the S3 client from current settings (call after credential/endpoint changes). */
 	rebuildS3Client: () => void;
+	/** Recomputes the public image URL base from current settings without rebuilding the S3 client or invalidating the connection test. */
+	refreshImageUrlPath: () => void;
 }
