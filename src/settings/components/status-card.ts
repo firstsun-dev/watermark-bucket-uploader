@@ -1,10 +1,12 @@
 import { setIcon } from "obsidian";
 import type { SettingsContext } from "../context";
-import { computeRows, computeSummary, STATE_CLASS, STATE_ICON, type RowState } from "../status-logic";
+import { buildStatusLine, STATE_CLASS, STATE_ICON, type RowState } from "../status-logic";
 
 /**
- * Renders (and registers for re-render via ctx.setStatusRenderer) the "Setup status" card
- * shown at the top of the settings tab.
+ * Renders (and registers for re-render via ctx.setStatusRenderer) a compact single-line
+ * "Setup status" card at the top of the settings tab. Shows a verdict plus destination /
+ * connection / watermark segments; when something needs attention, lists the specific
+ * issues and offers a "Review setup" action that opens the relevant section.
  */
 export function renderSetupStatus(containerEl: HTMLElement, ctx: SettingsContext): void {
 	const card = containerEl.createDiv({ cls: "r2-status-card" });
@@ -12,30 +14,38 @@ export function renderSetupStatus(containerEl: HTMLElement, ctx: SettingsContext
 	const paint = () => {
 		card.empty();
 
-		card.createEl("h3", { text: "Setup status", cls: "r2-status-title" });
-
 		const s = ctx.plugin.settings;
-		const rows = computeRows(s);
-		const list = card.createDiv({ cls: "r2-status-rows" });
+		const line = buildStatusLine(s);
 
-		for (const row of rows) {
-			const rowEl = list.createDiv({ cls: `r2-status-row ${STATE_CLASS[row.state]}` });
-			const iconEl = rowEl.createSpan({ cls: "r2-status-icon" });
-			setIcon(iconEl, STATE_ICON[row.state]);
-			const textEl = rowEl.createDiv({ cls: "r2-status-text" });
-			textEl.createSpan({ cls: "r2-status-label", text: row.label });
-			textEl.createSpan({ cls: "r2-status-detail", text: row.detail });
+		const mainEl = card.createDiv({ cls: `r2-status-line ${STATE_CLASS[line.state]}` });
+		const iconEl = mainEl.createSpan({ cls: "r2-status-icon" });
+		setIcon(iconEl, STATE_ICON[line.state]);
+		const verdictEl = mainEl.createSpan({ cls: "r2-status-verdict" });
+		const summary = STATE_VERDICT[line.state];
+		verdictEl.createSpan({ cls: "r2-status-verdict-text", text: summary });
+		verdictEl.createSpan({ cls: "r2-status-segments", text: " · " + line.segments.join(" · ") });
+
+		if (line.state !== "good" && line.issues.length > 0) {
+			const detailEl = card.createDiv({ cls: "r2-status-issues" });
+			for (const issue of line.issues) {
+				detailEl.createDiv({ cls: "r2-status-issue", text: issue });
+			}
+			const reviewBtn = detailEl.createEl("button", {
+				cls: "r2-status-review-btn",
+				text: "Review setup",
+			});
+			reviewBtn.addEventListener("click", () => ctx.focusFirstOpenSection());
 		}
-
-		const summary = computeSummary(s);
-		const summaryEl = card.createDiv({ cls: `r2-status-summary ${STATE_CLASS[summary.state]}` });
-		const summaryIcon = summaryEl.createSpan({ cls: "r2-status-icon" });
-		setIcon(summaryIcon, STATE_ICON[summary.state]);
-		summaryEl.createSpan({ cls: "r2-status-summary-text", text: summary.text });
 	};
 
 	ctx.setStatusRenderer(paint);
 	paint();
 }
+
+const STATE_VERDICT: Record<RowState, string> = {
+	good: "Ready",
+	attention: "Needs attention",
+	neutral: "Not configured",
+};
 
 export type { RowState };

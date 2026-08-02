@@ -9,9 +9,11 @@ export function makeSection(
 	label: string,
 	open = false,
 	icon?: string,
+	sectionId?: string,
 ): HTMLElement {
 	const details = parent.createEl("details", { cls: "r2-section" });
 	if (open) details.setAttribute("open", "");
+	if (sectionId) details.setAttribute("data-r2-section", sectionId);
 	const summary = details.createEl("summary", { cls: "r2-section-summary" });
 	summary.setAttribute("tabindex", "0");
 

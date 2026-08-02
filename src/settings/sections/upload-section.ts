@@ -79,7 +79,7 @@ function addCheckboxRow(
  * and upload destination (radio group, S3 bucket vs local vault folder).
  */
 export function renderUploadSection(containerEl: HTMLElement, ctx: SettingsContext): void {
-	const details = makeSection(containerEl, "Upload behavior", true, "upload");
+	const details = makeSection(containerEl, "Upload behavior", true, "upload", "upload");
 	const body = sectionBody(details);
 	const settings = ctx.plugin.settings;
 

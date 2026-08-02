@@ -22,7 +22,7 @@ function webpQualityLabel(quality: number): string {
 
 export function renderProcessingSection(containerEl: HTMLElement, ctx: SettingsContext): void {
 	const settings = ctx.plugin.settings;
-	const details = makeSection(containerEl, "Image processing", false, "image");
+	const details = makeSection(containerEl, "Image processing", false, "image", "processing");
 	const body = sectionBody(details);
 
 	renderPipelineIndicator(body);

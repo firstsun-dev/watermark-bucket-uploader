@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, TextComponent, setIcon } from "obsidian";
 import type R2UploaderPlugin from "../main";
 import type { SettingsContext } from "./context";
+import type { R2UploaderSettings } from "./types";
 import { debounce } from "./utils";
 import { renderConnectionSection } from "./sections/connection-section";
 import { renderUploadSection } from "./sections/upload-section";
@@ -11,6 +12,26 @@ import { renderSetupStatus } from "./components/status-card";
 
 const TEXT_SAVE_DEBOUNCE_MS = 400;
 const PREVIEW_RENDER_DEBOUNCE_MS = 150;
+
+type SectionId = "connection" | "upload" | "processing" | "watermark" | "advanced";
+
+/** Picks the section to open by default based on the user's setup progress. */
+function pickDefaultOpenSection(s: R2UploaderSettings): SectionId {
+	if (s.localUpload) return "upload";
+	const storageIncomplete = !s.accessKey || !s.secretKey || !s.bucket;
+	if (storageIncomplete) return "connection";
+	const needsTest = s.connectionNeedsRetest || s.lastConnectionTestSuccess !== true;
+	return needsTest ? "connection" : "upload";
+}
+
+/** Opens one section, closing the others (accordion behavior). */
+function openSectionExclusive(containerEl: HTMLElement, id: SectionId): void {
+	const sections = Array.from(containerEl.querySelectorAll<HTMLDetailsElement>("[data-r2-section]"));
+	for (const el of sections) {
+		const isTarget = el.getAttribute("data-r2-section") === id;
+		el.toggleAttribute("open", isTarget);
+	}
+}
 
 export const wrapTextWithPasswordHide = (text: TextComponent) => {
 	const hider = text.inputEl.insertAdjacentElement("beforebegin", createSpan());
@@ -68,12 +89,19 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			setPreviewRenderer: (fn) => { this.previewRenderer = fn; },
 			refreshSetupStatus: () => this.statusRenderer?.(),
 			setStatusRenderer: (fn) => { this.statusRenderer = fn; },
-		markConnectionDirty: () => {
-			this.plugin.settings.connectionNeedsRetest = true;
-			this.statusRenderer?.();
-		},
-		rebuildS3Client: () => this.plugin.createS3Client(),
-		refreshImageUrlPath: () => this.plugin.updateImageUrlPath(),
+			markConnectionDirty: () => {
+				this.plugin.settings.connectionNeedsRetest = true;
+				this.statusRenderer?.();
+			},
+			rebuildS3Client: () => this.plugin.createS3Client(),
+			refreshImageUrlPath: () => this.plugin.updateImageUrlPath(),
+			focusFirstOpenSection: () => {
+				const s = this.plugin.settings;
+				const target: SectionId = s.localUpload ? "upload" : "connection";
+				openSectionExclusive(this.containerEl, target);
+				const el = this.containerEl.querySelector<HTMLElement>(`[data-r2-section="${target}"]`);
+				el?.scrollIntoView({ block: "start", behavior: "smooth" });
+			},
 		};
 	}
 
@@ -92,6 +120,18 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		renderProcessingSection(containerEl, ctx);
 		renderWatermarkSection(containerEl, ctx);
 		renderAdvancedSection(containerEl, ctx);
+
+		// Accordion: opening one section closes the others; open a state-driven default.
+		const sections = Array.from(containerEl.querySelectorAll<HTMLDetailsElement>("[data-r2-section]"));
+		for (const el of sections) {
+			el.addEventListener("toggle", () => {
+				if (!el.open) return;
+				for (const other of sections) {
+					if (other !== el && other.open) other.open = false;
+				}
+			});
+		}
+		openSectionExclusive(containerEl, pickDefaultOpenSection(this.plugin.settings));
 
 		ctx.refreshSetupStatus();
 		ctx.refreshPreview();

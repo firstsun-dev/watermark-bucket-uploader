@@ -17,7 +17,7 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 	const settings = ctx.plugin.settings;
 	const notConfigured = !settings.accessKey || !settings.secretKey || !settings.bucket;
 
-	const details = makeSection(containerEl, "Storage connection", notConfigured, "key");
+	const details = makeSection(containerEl, "Storage connection", notConfigured, "key", "connection");
 	const body = sectionBody(details);
 
 	const renderBody = () => {
@@ -134,9 +134,9 @@ export function renderConnectionSection(containerEl: HTMLElement, ctx: SettingsC
 		// it only refreshes the derived URL base.
 		const imageUrlSetting = new Setting(body)
 			.setName("Public image URL")
-			.setDesc("Override the public URL base used for uploaded file links. Leave blank to use the default.")
+			.setDesc("Override the public URL base used for uploaded file links, such as cdn.example.com/. Leave blank to use the default.")
 			.addText((text) => {
-				text.setPlaceholder("HTTPS://cdn.example.com/")
+				text.setPlaceholder("Custom public image URL")
 					.setValue(settings.customImageUrl)
 					.onChange((v) => {
 						const result = validateHttpsUrl(v, { required: false });

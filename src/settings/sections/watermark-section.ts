@@ -1,4 +1,4 @@
-import { Setting } from "obsidian";
+import { DropdownComponent, Setting } from "obsidian";
 import type { SettingsContext } from "../context";
 import type { WatermarkPosition, WatermarkPresetId } from "../types";
 import { makeSection, sectionBody } from "../components/section";
@@ -12,7 +12,12 @@ const LOGO_PATH_INPUT_ID = "r2-watermark-logo-path-input";
 
 // ── Text tab panel ─────────────────────────────────────────────────────────
 
-function renderTextPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot: HTMLElement): void {
+function renderTextPanel(
+	panel: HTMLElement,
+	ctx: SettingsContext,
+	controlsRoot: HTMLElement,
+	markPresetCustom: () => void,
+): void {
 	const s = ctx.plugin.settings;
 	const fields: Setting[] = [];
 	let positionPickerWrap: HTMLElement | null = null;
@@ -27,6 +32,7 @@ function renderTextPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 		.addToggle((t) =>
 			t.setValue(s.watermarkEnabled).onChange(async (v) => {
 				s.watermarkEnabled = v;
+				markPresetCustom();
 				toggleFields(v);
 				refreshWatermarkTabLabels(controlsRoot, ctx);
 				await ctx.save();
@@ -80,6 +86,7 @@ function renderTextPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 					.setValue(s.watermarkFontSize)
 					.onChange(async (v) => {
 						s.watermarkFontSize = v;
+						markPresetCustom();
 						await ctx.save();
 						ctx.refreshPreview();
 					}),
@@ -117,6 +124,7 @@ function renderTextPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 					.setValue(s.watermarkColor)
 					.onChange((v) => {
 						s.watermarkColor = v;
+						markPresetCustom();
 						ctx.debouncedSave();
 						ctx.refreshPreview();
 					}),
@@ -129,6 +137,7 @@ function renderTextPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 	positionPickerWrap = panel.createDiv({ cls: "r2-watermark-placement" });
 	renderPositionPicker(positionPickerWrap, "Text position", s.watermarkPosition, (pos: WatermarkPosition) => {
 		s.watermarkPosition = pos;
+		markPresetCustom();
 		void ctx.save();
 		ctx.refreshPreview();
 	});
@@ -146,6 +155,7 @@ function renderTextPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 				.setValue(s.watermarkOffsetX)
 				.onChange(async (v) => {
 					s.watermarkOffsetX = v;
+					markPresetCustom();
 					await ctx.save();
 					ctx.refreshPreview();
 				}),
@@ -161,6 +171,7 @@ function renderTextPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 				.setValue(s.watermarkOffsetY)
 				.onChange(async (v) => {
 					s.watermarkOffsetY = v;
+					markPresetCustom();
 					await ctx.save();
 					ctx.refreshPreview();
 				}),
@@ -171,7 +182,12 @@ function renderTextPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 
 // ── Logo tab panel ─────────────────────────────────────────────────────────
 
-function renderLogoPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot: HTMLElement): void {
+function renderLogoPanel(
+	panel: HTMLElement,
+	ctx: SettingsContext,
+	controlsRoot: HTMLElement,
+	markPresetCustom: () => void,
+): void {
 	const s = ctx.plugin.settings;
 	const fields: Setting[] = [];
 	let positionPickerWrap: HTMLElement | null = null;
@@ -186,6 +202,7 @@ function renderLogoPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 		.addToggle((t) =>
 			t.setValue(s.watermarkLogoEnabled).onChange(async (v) => {
 				s.watermarkLogoEnabled = v;
+				markPresetCustom();
 				toggleFields(v);
 				refreshWatermarkTabLabels(controlsRoot, ctx);
 				await ctx.save();
@@ -241,6 +258,7 @@ function renderLogoPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 					.setValue(s.watermarkLogoSize)
 					.onChange(async (v) => {
 						s.watermarkLogoSize = v;
+						markPresetCustom();
 						await ctx.save();
 						ctx.refreshPreview();
 					}),
@@ -257,6 +275,7 @@ function renderLogoPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 					.setValue(s.watermarkLogoOpacity)
 					.onChange(async (v) => {
 						s.watermarkLogoOpacity = v;
+						markPresetCustom();
 						await ctx.save();
 						ctx.refreshPreview();
 					}),
@@ -269,6 +288,7 @@ function renderLogoPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 	positionPickerWrap = panel.createDiv({ cls: "r2-watermark-placement" });
 	renderPositionPicker(positionPickerWrap, "Logo position", s.watermarkLogoPosition, (pos: WatermarkPosition) => {
 		s.watermarkLogoPosition = pos;
+		markPresetCustom();
 		void ctx.save();
 		ctx.refreshPreview();
 	});
@@ -286,6 +306,7 @@ function renderLogoPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 				.setValue(s.watermarkLogoOffsetX)
 				.onChange(async (v) => {
 					s.watermarkLogoOffsetX = v;
+					markPresetCustom();
 					await ctx.save();
 					ctx.refreshPreview();
 				}),
@@ -301,6 +322,7 @@ function renderLogoPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 				.setValue(s.watermarkLogoOffsetY)
 				.onChange(async (v) => {
 					s.watermarkLogoOffsetY = v;
+					markPresetCustom();
 					await ctx.save();
 					ctx.refreshPreview();
 				}),
@@ -311,13 +333,25 @@ function renderLogoPanel(panel: HTMLElement, ctx: SettingsContext, controlsRoot:
 
 // ── Preset picker ────────────────────────────────────────────────────────────
 
-function renderPresetPicker(container: HTMLElement, ctx: SettingsContext, onApplied: () => void): void {
+/**
+ * Renders the preset dropdown. Selecting a preset applies it immediately (no native
+ * confirm dialog) and shows the preset's description; selecting "Custom" just records
+ * the choice. Returns the dropdown so callers can sync it back to "Custom" when the user
+ * edits any preset-controlled field (see markPresetCustom in renderWatermarkSection).
+ */
+function renderPresetPicker(
+	container: HTMLElement,
+	ctx: SettingsContext,
+	onApplied: () => void,
+): DropdownComponent {
 	const s = ctx.plugin.settings;
+	let dropdown!: DropdownComponent;
 
-	new Setting(container)
+	const setting = new Setting(container)
 		.setName("Preset")
 		.setDesc("Apply a ready-made watermark style, or keep tweaking your own (custom).")
 		.addDropdown((d) => {
+			dropdown = d;
 			for (const preset of WATERMARK_PRESETS) d.addOption(preset.id, preset.label);
 			d.addOption("custom", "Custom");
 			d.setValue(s.watermarkPreset);
@@ -330,11 +364,6 @@ function renderPresetPicker(container: HTMLElement, ctx: SettingsContext, onAppl
 				}
 				const preset = findWatermarkPreset(id);
 				if (!preset) return;
-				const confirmed = activeWindow.confirm("Apply this preset and replace current watermark settings?");
-				if (!confirmed) {
-					d.setValue(s.watermarkPreset);
-					return;
-				}
 				Object.assign(s, preset.values);
 				s.watermarkPreset = preset.id;
 				await ctx.save();
@@ -342,6 +371,16 @@ function renderPresetPicker(container: HTMLElement, ctx: SettingsContext, onAppl
 				onApplied();
 			});
 		});
+
+	// Inline description of the currently-selected preset, kept in sync after apply/refresh.
+	const noteEl = setting.descEl.createDiv({ cls: "r2-field-hint" });
+	const updateNote = () => {
+		const current = s.watermarkPreset === "custom" ? undefined : findWatermarkPreset(s.watermarkPreset);
+		noteEl.setText(current ? current.description : "Your own combination of text and logo settings.");
+	};
+	updateNote();
+
+	return dropdown;
 }
 
 // ── Section entry point ─────────────────────────────────────────────────────
@@ -357,15 +396,25 @@ function renderPresetPicker(container: HTMLElement, ctx: SettingsContext, onAppl
 export function renderWatermarkSection(containerEl: HTMLElement, ctx: SettingsContext): void {
 	const s = ctx.plugin.settings;
 	const connectionConfigured = !!s.accessKey && !!s.secretKey && !!s.bucket;
-	const details = makeSection(containerEl, "Watermark", connectionConfigured, "stamp");
+	const details = makeSection(containerEl, "Watermark", connectionConfigured, "stamp", "watermark");
 	const body = sectionBody(details);
 
 	const bodyContainer = body.createDiv({ cls: "r2-watermark-section-body" });
 
+	// Tracks the current preset dropdown so markPresetCustom can sync it back to "Custom"
+	// whenever the user edits a preset-controlled field.
+	let presetDropdown: DropdownComponent | null = null;
+	const markPresetCustom = () => {
+		if (s.watermarkPreset === "custom") return;
+		s.watermarkPreset = "custom";
+		presetDropdown?.setValue("custom");
+		void ctx.save();
+	};
+
 	function build(): void {
 		bodyContainer.empty();
 
-		renderPresetPicker(bodyContainer, ctx, () => build());
+		presetDropdown = renderPresetPicker(bodyContainer, ctx, () => build());
 
 		const layout = bodyContainer.createDiv({ cls: "r2-watermark-layout" });
 
@@ -380,8 +429,8 @@ export function renderWatermarkSection(containerEl: HTMLElement, ctx: SettingsCo
 		renderWatermarkTabs(
 			controls,
 			ctx,
-			(panel) => renderTextPanel(panel, ctx, controls),
-			(panel) => renderLogoPanel(panel, ctx, controls),
+			(panel) => renderTextPanel(panel, ctx, controls, markPresetCustom),
+			(panel) => renderLogoPanel(panel, ctx, controls, markPresetCustom),
 		);
 	}
 

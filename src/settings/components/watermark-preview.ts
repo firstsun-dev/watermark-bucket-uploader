@@ -278,7 +278,7 @@ export function renderWatermarkPreview(container: HTMLElement, ctx: SettingsCont
 		logoErrorEl.removeClass("is-hidden");
 		logoErrorEl.createSpan({ text: "Logo file not found: " });
 		logoErrorEl.createEl("code", { text: path });
-		const btn = logoErrorEl.createEl("button", { text: "Choose another file", cls: "r2-preview-logo-error-btn" });
+		const btn = logoErrorEl.createEl("button", { text: "Edit logo path", cls: "r2-preview-logo-error-btn" });
 		btn.addEventListener("click", () => {
 			// Switch to the Logo tab (if the tabs component is mounted) then focus its path field.
 			activeDocument.querySelector<HTMLElement>('.r2-tab[data-tab-id="logo"]')?.click();

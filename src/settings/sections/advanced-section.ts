@@ -4,7 +4,7 @@ import { makeSection, sectionBody } from "../components/section";
 
 export function renderAdvancedSection(containerEl: HTMLElement, ctx: SettingsContext): void {
 	const settings = ctx.plugin.settings;
-	const details = makeSection(containerEl, "Advanced", false, "settings-2");
+	const details = makeSection(containerEl, "Advanced", false, "settings-2", "advanced");
 	const body = sectionBody(details);
 
 	body.createEl("p", {

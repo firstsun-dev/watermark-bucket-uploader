@@ -137,3 +137,56 @@ export function computeSummary(s: R2UploaderSettings): StatusSummary {
 	}
 	return { text: "Needs attention", state: "attention" };
 }
+
+export interface StatusLine {
+	state: RowState;
+	segments: string[];
+	issues: string[];
+}
+
+/**
+ * Builds a compact single-line status: a verdict plus destination / connection /
+ * watermark segments joined by "·". `issues` lists the attention-row details for an
+ * optional secondary line when something needs action.
+ */
+export function buildStatusLine(s: R2UploaderSettings): StatusLine {
+	const rows = computeRows(s);
+	const issues = rows.filter((r) => r.state === "attention").map((r) => r.detail);
+
+	let destination: string;
+	let connection: string;
+	if (s.localUpload) {
+		destination = "Local uploads";
+		connection = s.localUploadFolder.trim() ? "folder ready" : "no folder set";
+	} else {
+		destination = "Bucket uploads";
+		if (!s.accessKey || !s.secretKey) {
+			connection = "credentials missing";
+		} else if (s.connectionNeedsRetest) {
+			connection = s.lastConnectionTestSuccess === undefined ? "not tested" : "needs retest";
+		} else if (s.lastConnectionTestSuccess === true) {
+			connection = "connection ready";
+		} else if (s.lastConnectionTestSuccess === false) {
+			connection = "connection failed";
+		} else {
+			connection = "not tested";
+		}
+	}
+
+	const wmOn = s.watermarkEnabled || s.watermarkLogoEnabled;
+	const wmRow = rows[3];
+	let watermark: string;
+	if (!wmOn) {
+		watermark = "watermark off";
+	} else if (wmRow.state === "good") {
+		watermark = "watermark on";
+	} else {
+		watermark = "watermark incomplete";
+	}
+
+	return {
+		state: computeSummary(s).state,
+		segments: [destination, connection, watermark],
+		issues,
+	};
+}

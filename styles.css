@@ -158,7 +158,7 @@ details[open] > .r2-section-summary .r2-chevron svg {
 
 .r2-preview-logo-error code {
     background: var(--background-modifier-border);
-    padding: 0 4px;
+    padding: 0 var(--r2-space-1);
     border-radius: 3px;
 }
 
@@ -175,7 +175,7 @@ details[open] > .r2-section-summary .r2-chevron svg {
 
 .r2-preview-toolbar .setting-item {
     border: none;
-    padding: 4px 0;
+    padding: var(--r2-space-1) 0;
 }
 
 .is-hidden {
@@ -211,13 +211,6 @@ details[open] > .r2-section-summary .r2-chevron svg {
     background: var(--background-secondary);
 }
 
-.r2-status-row {
-    display: flex;
-    align-items: center;
-    gap: var(--r2-space-2);
-    color: var(--text-normal);
-}
-
 .r2-status-icon {
     display: flex;
     align-items: center;
@@ -229,78 +222,65 @@ details[open] > .r2-section-summary .r2-chevron svg {
     height: 16px;
 }
 
-.r2-status-row.r2-status-success .r2-status-icon {
-    color: var(--text-success, var(--color-green));
-}
-
-.r2-status-row.r2-status-error .r2-status-icon {
-    color: var(--text-error, var(--color-red));
-}
-
-.r2-status-row.r2-status-warning .r2-status-icon {
-    color: var(--text-warning, var(--color-orange));
-}
-
-.r2-status-row.r2-status-muted .r2-status-icon {
-    color: var(--text-muted);
-}
-
-.r2-status-rows {
-    display: flex;
-    flex-direction: column;
-    gap: var(--r2-space-2);
-}
-
-.r2-status-title {
-    margin: 0;
-    font-size: 1em;
-    font-weight: 600;
-}
-
-.r2-status-text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    gap: 1px;
-}
-
-.r2-status-label {
-    font-weight: 500;
-    color: var(--text-normal);
-}
-
-.r2-status-detail {
-    font-size: 0.8em;
-    color: var(--text-muted);
-}
-
-.r2-status-summary {
+.r2-status-line {
     display: flex;
     align-items: center;
     gap: var(--r2-space-2);
-    margin-top: var(--r2-space-1);
-    padding-top: var(--r2-space-2);
-    border-top: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+}
+
+.r2-status-verdict {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--r2-space-1);
+    min-width: 0;
+}
+
+.r2-status-verdict-text {
     font-weight: 600;
 }
 
-.r2-status-summary-text {
-    font-size: 0.95em;
+.r2-status-segments {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.r2-status-summary.r2-status-success .r2-status-icon,
-.r2-status-summary.r2-status-success .r2-status-summary-text {
+.r2-status-line.r2-status-success .r2-status-icon,
+.r2-status-line.r2-status-success .r2-status-verdict-text {
     color: var(--text-success, var(--color-green));
 }
 
-.r2-status-summary.r2-status-warning .r2-status-icon,
-.r2-status-summary.r2-status-warning .r2-status-summary-text {
+.r2-status-line.r2-status-warning .r2-status-icon,
+.r2-status-line.r2-status-warning .r2-status-verdict-text {
     color: var(--text-warning, var(--color-orange));
 }
 
-.r2-status-summary.r2-status-muted .r2-status-icon,
-.r2-status-summary.r2-status-muted .r2-status-summary-text {
+.r2-status-line.r2-status-muted .r2-status-icon,
+.r2-status-line.r2-status-muted .r2-status-verdict-text {
     color: var(--text-muted);
+}
+
+.r2-status-issues {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: var(--r2-space-5);
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+.r2-status-issue {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.r2-status-review-btn {
+    align-self: flex-start;
+    margin-top: var(--r2-space-1);
+    min-height: 32px;
 }
 
 /* ── Watermark two-column layout ────────────────────────────────────────── */
@@ -470,7 +450,7 @@ details[open] > .r2-section-summary .r2-chevron svg {
 .r2-connection-status {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--r2-space-1);
 }
 
 .r2-connection-status-block {
@@ -500,7 +480,7 @@ details[open] > .r2-section-summary .r2-chevron svg {
 }
 
 .r2-connection-status-error {
-    margin: 4px 0;
+    margin: var(--r2-space-1) 0;
     padding: var(--r2-space-2);
     background: var(--background-modifier-error, transparent);
     border-radius: var(--r2-radius-sm);
@@ -512,7 +492,7 @@ details[open] > .r2-section-summary .r2-chevron svg {
 
 .r2-connection-retry-btn {
     min-height: 32px;
-    margin-top: 4px;
+    margin-top: var(--r2-space-1);
 }
 
 @keyframes r2-spin {
@@ -549,7 +529,7 @@ details[open] > .r2-section-summary .r2-chevron svg {
 
 .r2-checkbox-row input[type="checkbox"],
 .r2-radio-row input[type="radio"] {
-    margin-top: 4px;
+    margin-top: var(--r2-space-1);
     flex-shrink: 0;
 }
 

@@ -26,4 +26,6 @@ export interface SettingsContext {
 	rebuildS3Client: () => void;
 	/** Recomputes the public image URL base from current settings without rebuilding the S3 client or invalidating the connection test. */
 	refreshImageUrlPath: () => void;
+	/** Opens and scrolls to the primary setup section (Storage connection) — used by the status card's "Review setup" action. */
+	focusFirstOpenSection: () => void;
 }
