@@ -5,7 +5,7 @@ import { buildQueryString } from "@aws-sdk/querystring-builder";
 import { requestTimeout } from "@smithy/fetch-http-handler/dist-es/request-timeout";
 import { FetchHttpHandler, FetchHttpHandlerOptions } from "@smithy/fetch-http-handler";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { R2UploaderSettings } from "./settings";
+import { R2UploaderSettings } from "./settings/types";
 
 const DEFAULT_PDF_HEIGHT = 800;
 const DEFAULT_PPT_HEIGHT = "600px";

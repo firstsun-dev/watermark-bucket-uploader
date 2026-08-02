@@ -11,14 +11,16 @@ vi.mock("obsidian", () => ({
 }));
 
 const base: R2UploaderSettings = {
+	storageProvider: "r2",
 	accessKey: "", secretKey: "", region: "", bucket: "", folder: "",
-	imageUrlPath: "", uploadOnDrag: true, localUpload: false, localUploadFolder: "",
+	imageUrlPath: "", uploadOnDrag: true, uploadPastedImages: true, uploadOnCreate: false,
+	localUpload: false, localUploadFolder: "",
 	useCustomEndpoint: false, customEndpoint: "", forcePathStyle: false,
 	useCustomImageUrl: false, customImageUrl: "", uploadVideo: false,
 	uploadAudio: false, uploadPdf: false, bypassCors: false,
 	queryStringValue: "", queryStringKey: "", enableImageCompression: true,
 	maxImageCompressionSize: 1, imageCompressionQuality: 0.7, maxImageWidthOrHeight: 4096,
-	ignorePattern: "", disableAutoUploadOnCreate: false,
+	ignorePattern: "",
 	convertToWebP: true, webpQuality: 0.85,
 	watermarkEnabled: false, watermarkText: "",
 	watermarkFont: "", watermarkFontFamily: "", watermarkFontSize: 0,
@@ -28,8 +30,12 @@ const base: R2UploaderSettings = {
 	watermarkLogoEnabled: false, watermarkLogoPath: "", watermarkLogoSize: 0,
 	watermarkLogoOpacity: 0, watermarkLogoPosition: "center",
 	watermarkLogoOffsetX: 0, watermarkLogoOffsetY: 0,
+	watermarkPreset: "custom",
+	settingsOpenSection: "", watermarkActiveTab: "text",
+	previewSampleImage: "checker", previewSampleImagePath: "",
 	previewBackground: "black", previewBackgroundColor: "",
 	previewResolution: "720p", previewResolutionCustom: "",
+	connectionNeedsRetest: false,
 	debugMode: false, uploadSeq: 0,
 };
 

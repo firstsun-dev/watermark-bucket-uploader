@@ -5,7 +5,8 @@ import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
 // Trigger release via source change
 import { S3Client } from "@aws-sdk/client-s3";
 import { minimatch } from "minimatch";
-import { R2UploaderSettings, DEFAULT_SETTINGS, R2UploaderSettingTab, PasteFunction } from "./settings";
+import { R2UploaderSettings, DEFAULT_SETTINGS, PasteFunction, migrateSettings } from "./settings/types";
+import { R2UploaderSettingTab } from "./settings/settings-tab";
 import { createS3Client } from "./uploader";
 import { pasteHandler } from "./pasteHandler";
 
@@ -30,8 +31,13 @@ export default class R2UploaderPlugin extends Plugin {
 	}
 
 	createS3Client(): void {
-		if (!this.settings.region) return;
+		this.updateImageUrlPath();
+		if (!this.settings.region && !this.settings.useCustomEndpoint) return;
+		this.s3 = createS3Client(this.settings);
+	}
 
+	/** Recomputes `imageUrlPath` (the public URL base for uploaded links) from current settings. */
+	updateImageUrlPath(): void {
 		if (this.settings.useCustomImageUrl) {
 			this.settings.imageUrlPath = this.settings.customImageUrl;
 		} else {
@@ -42,8 +48,6 @@ export default class R2UploaderPlugin extends Plugin {
 				? `${baseUrl}${this.settings.bucket}/`
 				: baseUrl.replace("://", `://${this.settings.bucket}.`);
 		}
-
-		this.s3 = createS3Client(this.settings);
 	}
 
 	async onload() {
@@ -81,7 +85,7 @@ export default class R2UploaderPlugin extends Plugin {
 	}
 
 	private async handleFileCreate(file: TFile) {
-		if (this.settings.disableAutoUploadOnCreate) return;
+		if (!this.settings.uploadOnCreate) return;
 		if (!IMAGE_EXT_REGEX.test(file.path)) return;
 		
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -121,7 +125,9 @@ export default class R2UploaderPlugin extends Plugin {
 	onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as R2UploaderSettings;
+		this.settings = migrateSettings(
+			Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as R2UploaderSettings,
+		);
 	}
 
 	async saveSettings() {

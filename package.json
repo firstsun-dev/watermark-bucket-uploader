@@ -24,7 +24,7 @@
     "@semantic-release/exec": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^10.3.5",
-    "@semantic-release/npm": "^12.0.1",
+    "@semantic-release/npm": "^13.1.5",
     "@types/mime-types": "^2.1.1",
     "@types/node": "^20.19.37",
     "@vitest/coverage-v8": "4.1.5",
@@ -32,7 +32,7 @@
     "builtin-modules": "3.3.0",
     "conventional-changelog-conventionalcommits": "^8.0.0",
     "detective": "^5.2.1",
-    "esbuild": "^0.27.0",
+    "esbuild": "^0.28.1",
     "eslint": "^9.0.0",
     "eslint-plugin-obsidianmd": "^0.2.4",
     "eslint-plugin-sonarjs": "^4.0.3",
@@ -56,6 +56,22 @@
     "@smithy/fetch-http-handler": "^2.2.7",
     "browser-image-compression": "^2.0.2",
     "filesize": "^10.1.6",
-    "minimatch": "^10.2.3"
+    "minimatch": "^10.2.6"
+  },
+  "overrides": {
+    "postcss": "^8.5.23",
+    "vite": "^8.2.0",
+    "js-yaml": "^4.3.0",
+    "fast-uri": "^3.1.5",
+    "@semantic-release/npm": "^13.1.5",
+    "minimatch@3.1.5": {
+      "brace-expansion": "^1.1.16"
+    },
+    "minimatch@8.0.7": {
+      "brace-expansion": "^2.1.2"
+    },
+    "minimatch@9.0.9": {
+      "brace-expansion": "^2.1.2"
+    }
   }
 }

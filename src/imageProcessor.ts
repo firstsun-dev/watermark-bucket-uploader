@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import { filesize } from "filesize";
 import imageCompression from "browser-image-compression";
-import { R2UploaderSettings } from "./settings";
+import { R2UploaderSettings } from "./settings/types";
 import { paintTextWatermark, paintLogoWatermark } from "./watermark";
 
 export async function compressImage(
