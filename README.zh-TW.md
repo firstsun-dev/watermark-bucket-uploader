@@ -131,12 +131,12 @@
 
 ```bash
 git clone https://github.com/firstsun-dev/watermark-bucket-uploader.git
-npm install
+pnpm install
 
-npm run dev    # 監看模式建置
-npm run build  # 型別檢查 + 正式建置
-npm run test   # vitest 測試套件
-npm run lint   # eslint 檢查
+pnpm run dev    # 監看模式建置
+pnpm run build  # 型別檢查 + 正式建置
+pnpm run test   # vitest 測試套件
+pnpm run lint   # eslint 檢查
 ```
 
 ## 授權條款

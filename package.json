@@ -11,11 +11,12 @@
     "prepare": "husky",
     "lint": "eslint src/",
     "test": "vitest run",
-    "semantic-release": "npx semantic-release"
+    "semantic-release": "pnpm exec semantic-release"
   },
   "keywords": [],
   "author": "ClaudiaFang",
   "license": "MIT",
+  "packageManager": "pnpm@12.14.0",
   "engines": {
     "node": ">=20"
   },

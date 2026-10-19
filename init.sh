@@ -5,14 +5,14 @@ cd "$(dirname "$0")"
 fail=0
 note() { printf '\n=== %s ===\n' "$1"; }
 
-note "npm install"
-npm install || fail=1
+note "pnpm install --frozen-lockfile"
+pnpm install --frozen-lockfile || fail=1
 
-note "npm run build"
-npm run build || fail=1
+note "pnpm run build"
+pnpm run build || fail=1
 
-note "npm test"
-npm test || fail=1
+note "pnpm test"
+pnpm test || fail=1
 
 note "npx eslint ."
 npx eslint . || fail=1
