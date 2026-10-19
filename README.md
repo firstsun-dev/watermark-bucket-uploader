@@ -131,12 +131,12 @@ Watermarking is off by default and can be disabled entirely — skip this sectio
 
 ```bash
 git clone https://github.com/firstsun-dev/watermark-bucket-uploader.git
-npm install
+pnpm install
 
-npm run dev    # watch build
-npm run build  # type-check + production build
-npm run test   # vitest suite
-npm run lint   # eslint
+pnpm run dev    # watch build
+pnpm run build  # type-check + production build
+pnpm run test   # vitest suite
+pnpm run lint   # eslint
 ```
 
 ## License
