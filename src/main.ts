@@ -166,3 +166,5 @@ function matchesGlobPattern(filePath: string, pattern: string): boolean {
 	if (!pattern?.trim()) return false;
 	return pattern.split(",").map((p) => p.trim()).some((p) => minimatch(filePath, p));
 }
+
+// CI verification only (firstsun-dev/.github#42); do not merge
