@@ -1,3 +1,9 @@
+## [1.0.4](https://github.com/firstsun-dev/watermark-bucket-uploader/compare/1.0.3...1.0.4) (2026-11-13)
+
+### Bug Fixes
+
+* **deps:** bump vitest and @vitest/coverage-v8 to 4.1.11 ([#32](https://github.com/firstsun-dev/watermark-bucket-uploader/issues/32)) ([da47188](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/da47188006a28236cc5ab858d7e35c6f28de4e4a)), closes [#67](https://github.com/firstsun-dev/watermark-bucket-uploader/issues/67)
+
 ## [1.0.3](https://github.com/firstsun-dev/watermark-bucket-uploader/compare/1.0.2...1.0.3) (2026-09-02)
 
 ### Bug Fixes

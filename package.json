@@ -1,6 +1,6 @@
 {
   "name": "watermark-bucket-uploader",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Obsidian plugin: upload images to Cloudflare R2 with WebP conversion and watermark support.",
   "main": "main.js",
   "scripts": {
