@@ -1,3 +1,9 @@
+## [1.0.5](https://github.com/firstsun-dev/watermark-bucket-uploader/compare/1.0.4...1.0.5) (2026-11-16)
+
+### Bug Fixes
+
+* **deps:** update libraries and remove vulnerable release dependencies ([#34](https://github.com/firstsun-dev/watermark-bucket-uploader/issues/34)) ([f81cbe8](https://github.com/firstsun-dev/watermark-bucket-uploader/commit/f81cbe8be915bac5be7953854b84b04128add8c5))
+
 ## [1.0.4](https://github.com/firstsun-dev/watermark-bucket-uploader/compare/1.0.3...1.0.4) (2026-11-13)
 
 ### Bug Fixes
