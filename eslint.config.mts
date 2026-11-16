@@ -30,6 +30,14 @@ export default tseslint.config(
 			"sonarjs/no-duplicate-string": "off", // 插件在設定檔中常會誤報重複字串，暫時關閉
 		}
 	},
+	{
+		files: ["src/settings.ts"],
+		rules: {
+			// Keep the settings UI compatible with minAppVersion 1.6.6.
+			// Revisit declarative settings when the minimum reaches Obsidian 1.13.0.
+			"obsidianmd/settings-tab/prefer-setting-definitions": "off",
+		},
+	},
 	globalIgnores([
 		"node_modules",
 		"dist",

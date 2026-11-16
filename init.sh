@@ -14,8 +14,8 @@ pnpm run build || fail=1
 note "pnpm test"
 pnpm test || fail=1
 
-note "npx eslint ."
-npx eslint . || fail=1
+note "pnpm run lint --max-warnings=0"
+pnpm run lint --max-warnings=0 || fail=1
 
 note "harness hygiene"
 if [ -f progress.md ]; then

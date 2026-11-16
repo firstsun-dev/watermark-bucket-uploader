@@ -27,7 +27,7 @@ export async function replaceText(
 
 	try {
 		editor.transaction({ changes: [{ from, to, text: replacement }] });
-		if (isInTable) activeWindow.setTimeout(() => { try { editor.refresh(); } catch { /* ignore */ } }, REFRESH_DELAY);
+		if (isInTable) window.setTimeout(() => { try { editor.refresh(); } catch { /* ignore */ } }, REFRESH_DELAY);
 	} catch (e) {
 		console.error("[R2Uploader] replaceText error:", e);
 	}

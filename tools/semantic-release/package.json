@@ -1,0 +1,17 @@
+{
+  "name": "semantic-release",
+  "version": "25.0.0",
+  "private": true,
+  "description": "Project-local semantic-release 25 API and CLI adapter using the npm-free core",
+  "type": "module",
+  "main": "index.mjs",
+  "bin": {
+    "semantic-release": "cli.mjs"
+  },
+  "engines": {
+    "node": "^22.14.0 || >=24.10.0"
+  },
+  "dependencies": {
+    "@semantic-release/core": "1.0.0-beta.1"
+  }
+}
