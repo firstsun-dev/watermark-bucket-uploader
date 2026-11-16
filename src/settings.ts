@@ -351,7 +351,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 						await client.send(new HeadBucketCommand({ Bucket: this.plugin.settings.bucket }));
 						new Notice("Connection successful!");
 						btn.setButtonText("Success").buttonEl.addClass("r2-btn-success");
-						activeWindow.setTimeout(() => {
+						window.setTimeout(() => {
 							btn.setButtonText("Test").setDisabled(false);
 							btn.buttonEl.removeClass("r2-btn-success");
 						}, REFRESH_TIMEOUT);
@@ -360,7 +360,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 						const message = err instanceof Error ? err.message : String(err);
 						new Notice("Connection failed: " + message);
 						btn.setButtonText("Failed").buttonEl.addClass("r2-btn-error");
-						activeWindow.setTimeout(() => {
+						window.setTimeout(() => {
 							btn.setButtonText("Test").setDisabled(false);
 							btn.buttonEl.removeClass("r2-btn-error");
 						}, REFRESH_TIMEOUT);
@@ -432,7 +432,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 		new Setting(imgEl)
 			.setName("Webp quality")
 			.setDesc("0.1 (small file) — 1.0 (best quality). Default: 0.85")
-			.addSlider((s) => s.setDynamicTooltip().setLimits(0.1, 1.0, 0.05)
+			.addSlider((s) => s.setLimits(0.1, 1.0, 0.05)
 				.setValue(this.plugin.settings.webpQuality)
 				.onChange(async (v) => { this.plugin.settings.webpQuality = v; await this.plugin.saveSettings(); }));
 
@@ -452,7 +452,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 
 			new Setting(imgEl)
 				.setName("Compression quality")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(0.0, 1.0, 0.05)
+				.addSlider((s) => s.setLimits(0.0, 1.0, 0.05)
 					.setValue(this.plugin.settings.imageCompressionQuality)
 					.onChange(async (v) => { this.plugin.settings.imageCompressionQuality = v; await this.plugin.saveSettings(); })),
 
@@ -571,7 +571,7 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			new Setting(wmEl)
 				.setName("Font size (px)")
 				.setDesc("0 = auto (2% of image width)")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(0, 120, 2)
+				.addSlider((s) => s.setLimits(0, 120, 2)
 					.setValue(this.plugin.settings.watermarkFontSize)
 					.onChange(async (v) => { this.plugin.settings.watermarkFontSize = v; await this.save(); })),
 
@@ -605,14 +605,14 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			new Setting(wmEl)
 				.setName("Offset X")
 				.setDesc("Horizontal nudge (% of image width, negative = left)")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(-30, 30, 1)
+				.addSlider((s) => s.setLimits(-30, 30, 1)
 					.setValue(this.plugin.settings.watermarkOffsetX)
 					.onChange(async (v) => { this.plugin.settings.watermarkOffsetX = v; await this.save(); })),
 
 			new Setting(wmEl)
 				.setName("Offset y")
 				.setDesc("Vertical nudge (% of image height, negative = up)")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(-30, 30, 1)
+				.addSlider((s) => s.setLimits(-30, 30, 1)
 					.setValue(this.plugin.settings.watermarkOffsetY)
 					.onChange(async (v) => { this.plugin.settings.watermarkOffsetY = v; await this.save(); })),
 		];
@@ -656,13 +656,13 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 
 			new Setting(wmEl)
 				.setName("Logo size (% of image width)")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(1, 50, 1)
+				.addSlider((s) => s.setLimits(1, 50, 1)
 					.setValue(this.plugin.settings.watermarkLogoSize)
 					.onChange(async (v) => { this.plugin.settings.watermarkLogoSize = v; await this.save(); })),
 
 			new Setting(wmEl)
 				.setName("Logo opacity")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(0.0, 1.0, 0.05)
+				.addSlider((s) => s.setLimits(0.0, 1.0, 0.05)
 					.setValue(this.plugin.settings.watermarkLogoOpacity)
 					.onChange(async (v) => { this.plugin.settings.watermarkLogoOpacity = v; await this.save(); })),
 
@@ -679,14 +679,14 @@ export class R2UploaderSettingTab extends PluginSettingTab {
 			new Setting(wmEl)
 				.setName("Offset X")
 				.setDesc("Horizontal nudge (% of image width)")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(-30, 30, 1)
+				.addSlider((s) => s.setLimits(-30, 30, 1)
 					.setValue(this.plugin.settings.watermarkLogoOffsetX)
 					.onChange(async (v) => { this.plugin.settings.watermarkLogoOffsetX = v; await this.save(); })),
 
 			new Setting(wmEl)
 				.setName("Offset y")
 				.setDesc("Vertical nudge (% of image height)")
-				.addSlider((s) => s.setDynamicTooltip().setLimits(-30, 30, 1)
+				.addSlider((s) => s.setLimits(-30, 30, 1)
 					.setValue(this.plugin.settings.watermarkLogoOffsetY)
 					.onChange(async (v) => { this.plugin.settings.watermarkLogoOffsetY = v; await this.save(); })),
 		];
