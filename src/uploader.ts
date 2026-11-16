@@ -55,7 +55,7 @@ export class ObsHttpHandler extends FetchHttpHandler {
 		if (typeof rawBody === "string" || rawBody instanceof ArrayBuffer || rawBody === undefined) {
 			transformedBody = rawBody;
 		} else if (ArrayBuffer.isView(rawBody)) {
-			transformedBody = rawBody.buffer.slice(rawBody.byteOffset, rawBody.byteOffset + rawBody.byteLength);
+			transformedBody = new Uint8Array(new Uint8Array(rawBody.buffer, rawBody.byteOffset, rawBody.byteLength)).buffer;
 		}
 
 		const param: RequestUrlParam = {

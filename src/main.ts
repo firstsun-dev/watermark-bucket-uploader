@@ -92,7 +92,7 @@ export default class R2UploaderPlugin extends Plugin {
 			await this.runPasteHandler(null, activeView.editor, newFile);
 			
 			// Wait for the editor to update with the new Obsidian link
-			await new Promise((resolve) => activeWindow.setTimeout(resolve, AUTO_UPLOAD_DELAY));
+			await new Promise((resolve) => window.setTimeout(resolve, AUTO_UPLOAD_DELAY));
 			
 			const content = activeView.editor.getValue();
 			const vaultWithConfig = this.app.vault as unknown as { getConfig(key: string): boolean };
@@ -142,7 +142,7 @@ export default class R2UploaderPlugin extends Plugin {
 			this.settings,
 			this.s3,
 			(path) => adapter.readBinary(path),
-			(path, data) => adapter.writeBinary(path, data),
+			(path, data) => adapter.writeBinary(path, new Uint8Array(data).buffer),
 			getFilePath,
 			() => {
 				const f = this.app.workspace.getActiveFile();

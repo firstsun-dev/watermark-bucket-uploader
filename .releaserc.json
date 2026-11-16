@@ -52,21 +52,15 @@
       }
     ],
     [
-      "@semantic-release/npm",
-      {
-        "npmPublish": false
-      }
-    ],
-    [
       "@semantic-release/exec",
       {
-        "prepareCmd": "node -e \"const fs=require('fs'); const m=JSON.parse(fs.readFileSync('manifest.json')); m.version='${nextRelease.version}'; fs.writeFileSync('manifest.json', JSON.stringify(m,null,'\\t')); const v=JSON.parse(fs.readFileSync('versions.json')); v['${nextRelease.version}']=m.minAppVersion; fs.writeFileSync('versions.json', JSON.stringify(v,null,'\\t'));\""
+        "prepareCmd": "node scripts/prepare-release.mjs ${nextRelease.version}"
       }
     ],
     [
       "@semantic-release/git",
       {
-        "assets": ["manifest.json", "versions.json", "CHANGELOG.md", "package.json"],
+        "assets": ["manifest.json", "versions.json", "CHANGELOG.md", "package.json", "pnpm-lock.yaml"],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],

@@ -129,6 +129,12 @@ Watermarking is off by default and can be disabled entirely — skip this sectio
 
 ## Development
 
+Use Node.js 24 and the pinned pnpm 12.14.0 for development and releases.
+
+Release automation uses the local `semantic-release` workspace adapter in `tools/semantic-release`, backed by the official `@semantic-release/core` pinned to `1.0.0-beta.1`. This approved prerelease core avoids unused npm publishing dependencies. The adapter preserves pull-request skipping and defaults local runs to dry-run mode. Version preparation updates the package, plugin manifest and compatibility versions while leaving pnpm dependency resolution unchanged. The existing separate release-build workflow builds and uploads the tagged release artifacts.
+
+The workspace minimatch override selects patched versions for development tools. Validate tooling upgrades with `./init.sh`, `pnpm audit`, and `pnpm run lint --max-warnings=0`. Use `pnpm exec semantic-release --help` to inspect supported release options.
+
 ```bash
 git clone https://github.com/firstsun-dev/watermark-bucket-uploader.git
 pnpm install

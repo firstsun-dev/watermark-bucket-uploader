@@ -12,7 +12,9 @@
       "id": "wf-002",
       "name": "Image paste/drop interception and WebP conversion",
       "description": "Intercept clipboard paste and drag-drop of images, convert to WebP, and prepare for upload.",
-      "dependencies": ["wf-001"],
+      "dependencies": [
+        "wf-001"
+      ],
       "status": "todo",
       "evidence": ""
     },
@@ -20,7 +22,9 @@
       "id": "wf-003",
       "name": "S3/R2 upload with watermark stamp",
       "description": "Upload converted WebP images to the configured S3/R2 bucket with a configurable watermark overlay.",
-      "dependencies": ["wf-002"],
+      "dependencies": [
+        "wf-002"
+      ],
       "status": "todo",
       "evidence": ""
     },
@@ -28,9 +32,19 @@
       "id": "wf-004",
       "name": "Settings UI for bucket, watermark, and format options",
       "description": "Provide a settings tab for configuring the upload bucket, watermark text/position, and output format.",
-      "dependencies": ["wf-003"],
+      "dependencies": [
+        "wf-003"
+      ],
       "status": "todo",
       "evidence": ""
+    },
+    {
+      "id": "wf-005",
+      "name": "Dependency security updates and release tooling",
+      "description": "Update libraries, remove vulnerable npm release dependencies, retain pnpm and main release-build architecture, and clean lint warnings.",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "./init.sh passes on main with pnpm 12.14.0: frozen install, production build, 40 tests and zero-warning lint. pnpm audit reports no known vulnerabilities; pnpm peers check reports no issues. Offline dry runs cover shared-plugin resolution and skip prepare/publish."
     }
   ]
 }

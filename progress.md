@@ -4,7 +4,7 @@ Open work only. Done features are archived as one-liners in `archive/YYYY-MM.md`
 
 ## Last Updated
 
-2026-07-26
+2026-11-16
 
 ## Current Objective
 
@@ -21,7 +21,7 @@ No active feature — plugin scaffold complete; next up is image interception an
 
 ## Decisions Made
 
-- None yet.
+- Retain main’s pnpm 12.14.0 and separate release-build workflow. Release orchestration uses the approved pinned semantic-release core and a local workspace adapter.
 
 ## Log
 
