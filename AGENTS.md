@@ -144,37 +144,35 @@ Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particula
 - Don't assume desktop-only behavior unless `isDesktopOnly` is `true`.
 - Avoid large in-memory structures; be mindful of memory and storage constraints.
 
-## Agent Workflow
+## Start
 
-### Startup Workflow — Before writing code
+Read this file, then only what the task needs. From an issue: read it and what it links. Resuming: read the
+Draft PR description, commits, checks and review comments before editing.
 
-1. Read `feature_list.json` — pick the `status: "in_progress"` item; if none, take the first `status: "todo"` whose dependencies are all `done`.
-2. Read `progress.md` — current open work and next step.
-3. If `archive/$(date +%Y-%m).md` exists, review it for relevant context.
-4. **One feature at a time.** Finish and verify before moving on. Do not start a second feature until the active one is `done`.
+## Task tracking and handoff
 
-### Definition of Done
+- Tasks and backlog: GitHub Issues. Priority and status: [Project #6](https://github.com/orgs/firstsun-dev/projects/6).
+- Progress and handoff: branch, commits, Draft PR. Unfinished work goes to an issue.
+- History: git log; retired state files are in `archive/legacy-harness/` (do not load by default).
 
-A feature is done only when:
-- `./init.sh` passes.
-- `feature_list.json` status + evidence updated.
-- `progress.md` records the next step.
+## Scope
 
-### Verification Commands
+- One task per branch (a worktree when sessions run in parallel). Check open PRs for overlap.
+- No unrelated refactoring; file an issue instead.
+
+## Verification and Definition of Done
 
 ```bash
 ./init.sh
 ```
 
-Runs install → build → test → lint → harness hygiene checks. Run this before claiming a feature done.
+Runs install, build, test and lint with zero warnings. Release tooling stays pinned and the separate
+release-build workflow stays (#34).
 
-### End of Session — Before ending a session
+The PR records each check as PASS, FAIL, SKIP or NOT RUN (with the reason). Never call a failure
+pre-existing without reproducing it on the base branch.
 
-Overwrite `session-handoff.md` with the new stopping point. Move finished items from `progress.md` into `archive/YYYY-MM.md`. Note that `session-handoff.md` is gitignored per-checkout scratch — never commit it.
-
-- `feature_list.json` — authoritative feature tracker with status, dependencies, and evidence.
-- `progress.md` — open work only; done features are archived to `archive/YYYY-MM.md`.
-- `session-handoff.md` — per-checkout scratch, gitignored, rewritten each session.
+## Do and don't
 
 **Do**
 - Add commands with stable IDs (don't rename once released).
