@@ -1,28 +1,8 @@
 # Progress
 
-Open work only. Done features are archived as one-liners in `archive/YYYY-MM.md`; full narrative lives in `git log`.
+**Last updated:** 2026-11-25 · Open work only. Completed milestones: [archive/2026-11.md](archive/2026-11.md).
 
-## Last Updated
-
-2026-11-16
-
-## Current Objective
-
-No active feature — plugin scaffold complete; next up is image interception and WebP conversion.
-
-## What's Next
-
-1. Pick the next `status: "todo"` from `feature_list.json` whose dependencies are all `done`.
-2. Image paste/drop interception and WebP conversion (wf-002) is the logical next feature.
-
-## Blockers / Risks
-
-- None currently.
-
-## Decisions Made
-
-- Retain main’s pnpm 12.14.0 and separate release-build workflow. Release orchestration uses the approved pinned semantic-release core and a local workspace adapter.
-
-## Log
-
-- wf-001 (Plugin scaffold and Obsidian API integration): done — plugin loads in dev mode, build and tests pass.
+## Current state
+- All five original scaffold features have implementation evidence on main; no unfinished item in that queue.
+- Pick new work from GitHub Issues/PRs; verify current acceptance criteria rather than restarting the scaffold.
+- Preserve pinned release tooling and the separate release-build workflow (#34). Manual Obsidian/provider acceptance was not rerun in this archive pass.

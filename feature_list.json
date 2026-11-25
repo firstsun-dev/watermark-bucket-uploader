@@ -15,8 +15,8 @@
       "dependencies": [
         "wf-001"
       ],
-      "status": "todo",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Main src/pasteHandler.ts + imageProcessor.ts implement paste/drop and WebP; #34 recorded 40 tests/build passing; runtime acceptance not rerun."
     },
     {
       "id": "wf-003",
@@ -25,8 +25,8 @@
       "dependencies": [
         "wf-002"
       ],
-      "status": "todo",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Main src/uploader.ts + watermark.ts implement S3 PutObject and optional text/logo overlays; #34 recorded 40 tests/build passing; live provider check not rerun."
     },
     {
       "id": "wf-004",
@@ -35,8 +35,8 @@
       "dependencies": [
         "wf-003"
       ],
-      "status": "todo",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Main src/settings.ts implements storage, WebP and watermark configuration; #34 recorded build/lint/40 tests passing; manual UI check not rerun."
     },
     {
       "id": "wf-005",
